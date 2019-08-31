@@ -39,8 +39,7 @@ public class JabelJavacPlugin implements Plugin {
 
     @Override
     public void init(JavacTask task, String... args) {
-        System.out.println("Jabel: init");
-
+        System.out.println("Initializing Jabel...");
         ByteBuddyAgent.install();
 
         ByteBuddy byteBuddy = new ByteBuddy();
@@ -134,6 +133,8 @@ public class JabelJavacPlugin implements Plugin {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+
+        System.out.println("Jabel initialized");
     }
 
     private static class ClassWriterClassVisitor extends ClassVisitor {

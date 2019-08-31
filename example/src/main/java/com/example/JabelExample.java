@@ -2,6 +2,10 @@ package com.example;
 
 public class JabelExample {
     public static void main(String[] args) {
+        System.out.println(new JabelExample().run(args));
+    }
+
+    public String run(String[] args) {
         var result = switch (args.length) {
             case 1 -> {
                 break "one";
@@ -9,8 +13,7 @@ public class JabelExample {
             case 2, 3 -> "two or three";
             default -> new JabelExample().new Inner().innerPublic();
         };
-
-        System.out.println(result);
+        return result;
     }
 
     private String outerPrivate() {
