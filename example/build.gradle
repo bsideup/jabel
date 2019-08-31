@@ -1,0 +1,16 @@
+plugins {
+    id "java"
+}
+
+sourceCompatibility = targetCompatibility = 12
+
+compileJava {
+    options.compilerArgs = [
+            "--enable-preview",
+            "-Xplugin:jabel"
+    ]
+}
+
+dependencies {
+    annotationProcessor project(":jabel-javac-plugin")
+}
