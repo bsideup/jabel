@@ -11,6 +11,20 @@ compileJava {
     ]
 }
 
+compileTestJava {
+    sourceCompatibility = targetCompatibility = 8
+}
+
+test {
+    def java8home = System.getenv("JAVA_HOME_8_x64")
+    if (!java8home) {
+        throw new IllegalStateException("JAVA_HOME_8_x64 must be set")
+    }
+    executable = "$java8home/bin/java"
+}
+
 dependencies {
     annotationProcessor project(":jabel-javac-plugin")
+
+    testCompile 'junit:junit:4.12'
 }
