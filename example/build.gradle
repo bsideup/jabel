@@ -16,9 +16,9 @@ compileTestJava {
 }
 
 test {
-    def java8home = System.getenv("JAVA_HOME_8_x64")
+    def java8home = System.getenv("JAVA_HOME_8")
     if (!java8home) {
-        throw new IllegalStateException("JAVA_HOME_8_x64 must be set")
+        throw new IllegalStateException("JAVA_HOME_8 must be set")
     }
     executable = "$java8home/bin/java"
 }

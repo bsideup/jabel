@@ -12,6 +12,8 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 8
+    - name: Export Java 8 Home
+      run: export JAVA_HOME_8=$JAVA_HOME
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
