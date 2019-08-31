@@ -6,8 +6,7 @@ sourceCompatibility = targetCompatibility = 12
 
 compileJava {
     options.compilerArgs = [
-            "--enable-preview",
-            "-Xplugin:jabel"
+            "--enable-preview"
     ]
 }
 

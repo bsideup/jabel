@@ -1,13 +1,11 @@
 package com.github.bsideup.jabel;
 
-import com.sun.source.util.JavacTask;
-import com.sun.source.util.Plugin;
-import com.sun.tools.javac.api.BasicJavacTask;
 import com.sun.tools.javac.jvm.ClassFile;
 import com.sun.tools.javac.jvm.ClassWriter;
 import com.sun.tools.javac.jvm.Gen;
 import com.sun.tools.javac.jvm.StringConcat;
 import com.sun.tools.javac.jvm.Target;
+import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.Context;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
@@ -24,22 +22,26 @@ import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
 import net.bytebuddy.pool.TypePool;
 
+import javax.annotation.processing.Completion;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import java.lang.reflect.Field;
+import java.util.Set;
 
+import static java.util.Collections.emptySet;
 import static net.bytebuddy.jar.asm.Opcodes.ASM7;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 
-public class JabelJavacPlugin implements Plugin {
+public class JabelJavacProcessor implements Processor {
 
-    @Override
-    public String getName() {
-        return "jabel";
-    }
-
-    @Override
-    public void init(JavacTask task, String... args) {
-        System.out.println("Initializing Jabel...");
+    static {
         ByteBuddyAgent.install();
 
         ByteBuddy byteBuddy = new ByteBuddy();
@@ -85,8 +87,18 @@ public class JabelJavacPlugin implements Plugin {
                 })
                 .make()
                 .load(ClassFile.class.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+    }
 
-        Context context = ((BasicJavacTask) task).getContext();
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.RELEASE_8;
+    }
+
+    @Override
+    public void init(ProcessingEnvironment processingEnv) {
+        System.out.println("Jabel: initializing...");
+
+        Context context = ((JavacProcessingEnvironment) processingEnv).getContext();
 
         Target target = Target.instance(context);
 
@@ -133,8 +145,27 @@ public class JabelJavacPlugin implements Plugin {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+        System.out.println("Jabel: initialized.");
+    }
 
-        System.out.println("Jabel initialized");
+    @Override
+    public Set<String> getSupportedOptions() {
+        return emptySet();
+    }
+
+    @Override
+    public Set<String> getSupportedAnnotationTypes() {
+        return emptySet();
+    }
+
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        return false;
+    }
+
+    @Override
+    public Iterable<? extends Completion> getCompletions(Element element, AnnotationMirror annotation, ExecutableElement member, String userText) {
+        return emptySet();
     }
 
     private static class ClassWriterClassVisitor extends ClassVisitor {
