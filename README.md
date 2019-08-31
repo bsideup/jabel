@@ -24,4 +24,43 @@ and other features unavaliable in Java 8.
 
 ## How to use
 
-TODO
+The plugin is distributed with [Jitpack](https://jitpack.io)
+
+First, you need to add Jitpack to your repository list:
+```groovy
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+```
+
+Then, add Jabel as any other annotation processor:
+```groovy
+dependencies {
+    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.1.0'
+}
+```
+
+Now, use Java 12 and, if you want to use [Switch expressions](https://openjdk.java.net/jeps/325),
+enable preview features:
+```groovy
+sourceCompatibility = targetCompatibility = 12
+
+compileJava {
+    options.compilerArgs = [
+            "--enable-preview"
+    ]
+}
+```
+
+That's it! Compile your project and verify that the result is Java 8 bytecode (52.0):
+```shell script
+$ javap -v example/build/classes/java/main/com/example/JabelExample.class
+Classfile /Users/bsideup/Work/bsideup/jabel/example/build/classes/java/main/com/example/JabelExample.class
+  Last modified 31 Aug 2019; size 1463 bytes
+  MD5 checksum d98fb6c3bc1b4046fe745983340b7295
+  Compiled from "JabelExample.java"
+public class com.example.JabelExample
+  minor version: 0
+  major version: 52
+```
