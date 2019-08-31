@@ -15,11 +15,13 @@ compileTestJava {
 }
 
 test {
-    def java8home = System.getenv("JAVA_HOME_8")
-    if (!java8home) {
-        throw new IllegalStateException("JAVA_HOME_8 must be set")
+    doFirst {
+        def java8home = System.getenv("JAVA_HOME_8")
+        if (!java8home) {
+            throw new IllegalStateException("JAVA_HOME_8 must be set")
+        }
+        executable = "$java8home/bin/java"
     }
-    executable = "$java8home/bin/java"
 }
 
 dependencies {
