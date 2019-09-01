@@ -4,6 +4,10 @@ on: [push, pull_request]
 
 jobs:
   build:
+    strategy:
+      matrix:
+        javaVersion: [9, 10, 11, 12]
+
     runs-on: ubuntu-latest
 
     steps:
@@ -17,6 +21,6 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
-        java-version: 12
+        java-version: ${{ matrix.javaVersion }}
     - name: Build with Gradle
       run: ./gradlew build
