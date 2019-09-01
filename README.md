@@ -24,6 +24,61 @@ and other features unavaliable in Java 8.
 
 The plugin is distributed with [Jitpack](https://jitpack.io)
 
+### Maven
+Make sure you have Jitpack added to the repositories list:
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+```
+
+Jabel has to be added as an annotation processor to your maven-compiler-plugin:
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version>
+            <configuration>
+                <!-- Make sure we're not using Java 9+ APIs -->
+                <release>8</release>
+                <annotationProcessorPaths>
+                    <annotationProcessorPath>
+                        <groupId>com.github.bsideup.jabel</groupId>
+                        <artifactId>jabel-javac-plugin</artifactId>
+                        <version>0.2.0</version>
+                    </annotationProcessorPath>
+                </annotationProcessorPaths>
+                <annotationProcessors>
+                    <annotationProcessor>com.github.bsideup.jabel.JabelJavacProcessor</annotationProcessor>
+                </annotationProcessors>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+Compile your project and verify that Jabel is installed and successfully reports:
+```
+[INFO] --- maven-compiler-plugin:3.8.1:compile (default-compile) @ tester.thirteen ---
+[INFO] Changes detected - recompiling the module!
+Jabel: initialized. Enabled features:
+	- VAR_SYNTAX_IMPLICIT_LAMBDAS
+	- LOCAL_VARIABLE_TYPE_INFERENCE
+	- PRIVATE_SAFE_VARARGS
+	- SWITCH_MULTIPLE_CASE_LABELS
+	- EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES
+	- SWITCH_EXPRESSION
+	- DIAMOND_WITH_ANONYMOUS_CLASS_CREATION
+	- TEXT_BLOCKS
+	- SWITCH_RULE
+```
+
+### Gradle
 First, you need to add Jitpack to your repository list:
 ```groovy
 repositories {
