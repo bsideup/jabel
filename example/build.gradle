@@ -2,16 +2,18 @@ plugins {
     id "java"
 }
 
-sourceCompatibility = targetCompatibility = 12
+sourceCompatibility = targetCompatibility = 8
 
 compileJava {
     options.compilerArgs = [
-            "--enable-preview"
+            "--release", "8",
     ]
 }
 
 compileTestJava {
-    sourceCompatibility = targetCompatibility = 8
+    options.compilerArgs = [
+            "--release", "8",
+    ]
 }
 
 test {

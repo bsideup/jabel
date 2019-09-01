@@ -1,4 +1,4 @@
-# Jabel - Javac 12 plugin that makes it emit Java 8 bytecode
+# Jabel - use Javac 12+ syntax when targeting Java 8
 
 > Because life is too short to wait for your users to upgrade their Java!
 
@@ -14,10 +14,8 @@ But, since most of features after Java 8 did not require a change in the bytecod
 ## How Jabel works
 
 Although Jabel is an annotation processor, it does not run any processing,
-but instruments the java compiler classes and makes it think that Java 12 target
-does not support certain bytecode features like indy strings, nestmates, and others.
-
-It also makes it emit Java 8 bytecode major/minor version (instead of Java 12 experimental).
+but instruments the java compiler classes and makes it treat some new Java 9+ languages features
+as they were supported in Java 8.
 
 The result is a valid Java 8 bytecode for your switch expressions, `var` declarations,
 and other features unavaliable in Java 8.
@@ -31,30 +29,46 @@ First, you need to add Jitpack to your repository list:
 repositories {
     maven { url 'https://jitpack.io' }
 }
-
 ```
 
 Then, add Jabel as any other annotation processor:
 ```groovy
 dependencies {
-    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.1.0'
+    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.2.0'
 }
 ```
 
-Now, use Java 12 and, if you want to use [Switch expressions](https://openjdk.java.net/jeps/325),
-enable preview features:
+Now, even if you set source/target/release to 8, the compiler will let you use some new language features.
+The full list of features will be printed during the compilation.
 ```groovy
-sourceCompatibility = targetCompatibility = 12
+sourceCompatibility = targetCompatibility = 8
 
 compileJava {
     options.compilerArgs = [
-            "--enable-preview"
+            "--release", "8" // Avoid using Java 12 APIs
     ]
 }
 ```
 
-That's it! Compile your project and verify that the result is Java 8 bytecode (52.0):
+Compile your project and verify that the result is still a valid Java 8 bytecode (52.0):
 ```shell script
+$ ./gradlew --no-daemon clean :example:test
+
+> Task :example:compileJava
+Jabel: initialized. Enabled features:
+        - LOCAL_VARIABLE_TYPE_INFERENCE
+        - SWITCH_EXPRESSION
+        - PRIVATE_SAFE_VARARGS
+        - SWITCH_MULTIPLE_CASE_LABELS
+        - VAR_SYNTAX_IMPLICIT_LAMBDAS
+        - DIAMOND_WITH_ANONYMOUS_CLASS_CREATION
+        - SWITCH_RULE
+        - EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES
+
+
+BUILD SUCCESSFUL in 6s
+8 actionable tasks: 8 executed
+
 $ javap -v example/build/classes/java/main/com/example/JabelExample.class
 Classfile /Users/bsideup/Work/bsideup/jabel/example/build/classes/java/main/com/example/JabelExample.class
   Last modified 31 Aug 2019; size 1463 bytes
