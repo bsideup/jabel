@@ -20,6 +20,21 @@ as they were supported in Java 8.
 The result is a valid Java 8 bytecode for your switch expressions, `var` declarations,
 and other features unavaliable in Java 8.
 
+## Why it works
+
+The JVM has evolved a lot for the past years. However, most language features
+that were added are simply a syntatic sugar. 
+They do not require new bytecode, hence can be compiled to the Java 8.
+
+But, since the Java language was always bound to the JVM development, new language features
+require the same target as the JVM because they get released altogether.  
+
+As was previously described, Jabel makes the compiler think that certain features were developed
+for Java 8, and removes the checks that otherwise will report them as invalid for the target.
+
+It is important to understand that it will use the same code as for Java 12 and won't change
+the result's classfile version, because the compilation phase will be done with Java 8 target.
+
 ## How to use
 
 The plugin is distributed with [Jitpack](https://jitpack.io)

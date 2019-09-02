@@ -2,7 +2,8 @@ plugins {
     id "java"
 }
 
-sourceCompatibility = targetCompatibility = 8
+sourceCompatibility = 12
+targetCompatibility = 8
 
 compileJava {
     options.compilerArgs = [
