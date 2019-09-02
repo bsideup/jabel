@@ -18,7 +18,7 @@ but instruments the java compiler classes and makes it treat some new Java 9+ la
 as they were supported in Java 8.
 
 The result is a valid Java 8 bytecode for your switch expressions, `var` declarations,
-and other features unavaliable in Java 8.
+and other features unavailable in Java 8.
 
 ## Why it works
 
