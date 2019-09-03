@@ -111,7 +111,7 @@ dependencies {
 Now, even if you set source/target/release to 8, the compiler will let you use some new language features.
 The full list of features will be printed during the compilation.
 ```groovy
-sourceCompatibility = targetCompatibility = 8
+sourceCompatibility = 12 // for the IDE support
 
 compileJava {
     options.compilerArgs = [
