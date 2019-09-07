@@ -155,7 +155,7 @@ public class com.example.JabelExample
 
 * Open Preferences,
 * Choose "Editor -> Inspection"
-* Find "Usages of API which isn't avaiable at the configured language level",
+* Find "Usages of API which isn't available at the configured language level"
 * Click "Higher than", and select "9 - Modules, private method in interfaces etc" from dropdown
 
 ![IntelliJ IDEA Language Level Inspection](.README_images/idea-setting-language-level-inspection.png)
