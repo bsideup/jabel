@@ -97,12 +97,12 @@ public class JabelJavacProcessor implements Processor {
     public void init(ProcessingEnvironment processingEnv) {
         System.out.println(
                 ENABLED_FEATURES.stream()
-                .map(Enum::name)
-                .collect(Collectors.joining(
-                        "\n\t- ",
-                        "Jabel: initialized. Enabled features: \n\t- ",
-                        "\n"
-                ))
+                        .map(Enum::name)
+                        .collect(Collectors.joining(
+                                "\n\t- ",
+                                "Jabel: initialized. Enabled features: \n\t- ",
+                                "\n"
+                        ))
         );
     }
 

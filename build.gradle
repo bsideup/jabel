@@ -1,4 +1,5 @@
 subprojects {
+    group = 'com.github.bsideup.jabel'
     repositories {
         jcenter()
     }

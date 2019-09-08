@@ -7,7 +7,7 @@ import net.bytebuddy.asm.Advice;
 public class CheckSourceLevelAdvice {
 
     @Advice.OnMethodEnter
-    public static void checkSourceLevelOnExit(
+    public static void checkSourceLevel(
             @Advice.Argument(value = 1, readOnly = false) Feature feature
     ) {
         if (feature.allowedInSource(Source.JDK8)) {
