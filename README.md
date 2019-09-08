@@ -176,7 +176,9 @@ public class com.example.JabelExample
 
 ## IDE support
 
-### How to avoid using Java 9+ APIs in IntelliJ IDEA
+### IntelliJ IDEA
+#### How to avoid using Java 9+ APIs in IntelliJ IDEA
+If you set `--release=8` flag, the compiler will report usages of APIs that were not in Java 8 (e.g. `StackWalker`). But if you wish to see such usages while editing the code, you can make IDEA highlight them for you:
 
 * Open Preferences
 * Choose "Editor -> Inspection"
