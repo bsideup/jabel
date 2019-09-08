@@ -53,6 +53,31 @@ Make sure you have Jitpack added to the repositories list:
 Jabel has to be added as an annotation processor to your maven-compiler-plugin:
 ```xml
 <build>
+    <profiles>
+        <profile>
+            <id>intellij-idea-only</id>
+            <activation>
+                <property>
+                    <name>idea.maven.embedder.version</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <release>13</release>
+                            <compilerArgs>
+                                <arg>--enable-preview</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <plugins>
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
