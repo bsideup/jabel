@@ -148,3 +148,14 @@ public class com.example.JabelExample
   minor version: 0
   major version: 52
 ```
+
+## IDE support
+
+### How to avoid using Java 9+ APIs in IntelliJ IDEA
+
+* Open Preferences
+* Choose "Editor -> Inspection"
+* Find "Usages of API which isn't available at the configured language level"
+* Click "Higher than", and select "9 - Modules, private method in interfaces etc" from dropdown
+
+![IntelliJ IDEA Language Level Inspection](docs/images/idea-setting-language-level-inspection.png)
