@@ -52,7 +52,6 @@ Make sure you have Jitpack added to the repositories list:
 
 Jabel has to be added as an annotation processor to your maven-compiler-plugin:
 ```xml
-<build>
     <profiles>
         <profile>
             <id>intellij-idea-only</id>
@@ -78,6 +77,7 @@ Jabel has to be added as an annotation processor to your maven-compiler-plugin:
         </profile>
     </profiles>
 
+<build>
     <plugins>
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
