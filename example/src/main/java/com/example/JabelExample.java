@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 public class JabelExample {
+
     public static void main(String[] args) {
         System.out.println(new JabelExample().run(args));
     }
@@ -14,7 +15,7 @@ public class JabelExample {
         // https://openjdk.java.net/jeps/325
         var result = switch (args.length) {
             case 1 -> {
-                break "one";
+                yield "one";
             }
             case 2, 3 -> "two or three";
             default -> new JabelExample().new Inner().innerPublic();
@@ -33,7 +34,7 @@ public class JabelExample {
             public String call() {
                 // Var in lambda parameter
                 Function<String, String> function = (var prefix) -> {
-                    return  prefix + Integer.toString(0);
+                    return prefix + Integer.toString(0);
                 };
                 // Test indy strings
                 return function.apply("idk ");
