@@ -45,7 +45,10 @@ public class JabelJavacProcessor implements Processor {
 
                     "EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES",
 
-                    "TEXT_BLOCKS"
+                    "TEXT_BLOCKS",
+
+                    "PATTERN_MATCHING_IN_INSTANCEOF",
+                    "REIFIABLE_TYPES_INSTANCEOF"
             )
             .map(name -> {
                 try {
