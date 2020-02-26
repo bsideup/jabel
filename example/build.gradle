@@ -2,7 +2,7 @@ plugins {
     id "java"
 }
 
-sourceCompatibility = 12
+sourceCompatibility = 13
 targetCompatibility = 8
 
 compileJava {
