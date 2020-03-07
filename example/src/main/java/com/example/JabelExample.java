@@ -15,7 +15,10 @@ public class JabelExample {
         // https://openjdk.java.net/jeps/325
         var result = switch (args.length) {
             case 1 -> {
-                yield "one";
+                yield """
+                        one...
+                        yet pretty long!
+                """;
             }
             case 2, 3 -> "two or three";
             default -> new JabelExample().new Inner().innerPublic();
@@ -33,8 +36,14 @@ public class JabelExample {
             @Override
             public String call() {
                 // Var in lambda parameter
-                Function<String, String> function = (var prefix) -> {
-                    return prefix + Integer.toString(0);
+                Function<Object, String> function = (var prefix) -> {
+                    // Pattern Matching in instanceof
+                    // https://openjdk.java.net/jeps/305
+                    if (prefix instanceof String s) {
+                        return s + Integer.toString(0);
+                    } else {
+                        throw new IllegalArgumentException("Expected string!");
+                    }
                 };
                 // Test indy strings
                 return function.apply("idk ");

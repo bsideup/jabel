@@ -3,9 +3,13 @@
 .gradle
 
 build/
+target/
 
 .idea/
 out/
+*.iml
+*.ipr
+*.iws
 
 
 .project
