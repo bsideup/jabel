@@ -2,7 +2,7 @@ plugins {
     id "java"
 }
 
-sourceCompatibility = 13
+sourceCompatibility = 14
 targetCompatibility = 8
 
 compileJava {
@@ -29,6 +29,7 @@ test {
 
 dependencies {
     annotationProcessor project(":jabel-javac-plugin")
+    compileOnly project(":jabel-javac-plugin")
 
     testCompile 'junit:junit:4.12'
 }

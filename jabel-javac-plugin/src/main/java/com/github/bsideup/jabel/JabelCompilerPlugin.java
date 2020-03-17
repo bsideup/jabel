@@ -94,6 +94,7 @@ public class JabelCompilerPlugin implements Plugin {
             throw new RuntimeException(e);
         }
 
+        // TODO use Log
         System.out.println(
                 ENABLED_FEATURES.stream()
                         .map(Enum::name)
@@ -132,64 +133,101 @@ public class JabelCompilerPlugin implements Plugin {
 
                 JCTree.JCClassDecl classDecl = (JCTree.JCClassDecl) node;
 
-                classDecl.extending = make.Type(syms.objectType);
-
-                if (!containsMethod(classDecl, names.toString)) {
-                    JCTree.JCMethodDecl methodDecl = make.MethodDef(
-                            new Symbol.MethodSymbol(
-                                    Flags.PUBLIC,
-                                    names.toString,
-                                    new Type.MethodType(
-                                            List.nil(),
-                                            syms.stringType,
-                                            List.nil(),
-                                            syms.objectType.tsym
-                                    ),
-                                    syms.objectType.tsym
-                            ),
-                            make.Block(0, generateToString(classDecl))
-                    );
-                    classDecl.defs = classDecl.defs.append(methodDecl);
+                if (classDecl.extending == null) {
+                    // Prevent implicit "extends java.lang.Record"
+                    classDecl.extending = make.Type(syms.objectType);
                 }
-                if (!containsMethod(classDecl, names.hashCode)) {
-                    classDecl.defs = classDecl.defs.append(make.MethodDef(
-                            new Symbol.MethodSymbol(
-                                    Flags.PUBLIC,
-                                    names.hashCode,
-                                    new Type.MethodType(
-                                            List.nil(),
-                                            syms.intType,
-                                            List.nil(),
-                                            syms.objectType.tsym
-                                    ),
-                                    syms.objectType.tsym
-                            ),
-                            make.Block(0, generateHashCode(classDecl))
-                    ));
-                }
-                if (!containsMethod(classDecl, names.equals)) {
-                    Symbol.MethodSymbol methodSymbol = new Symbol.MethodSymbol(
-                            Flags.PUBLIC | Flags.FINAL,
-                            names.equals,
-                            new Type.MethodType(
-                                    List.of(syms.objectType),
-                                    syms.booleanType,
-                                    List.nil(),
-                                    syms.methodClass
-                            ),
-                            syms.objectType.tsym
-                    );
-                    Symbol.VarSymbol firstParameter = methodSymbol.params().head;
 
-                    JCTree.JCMethodDecl methodDecl = make.MethodDef(
-                            methodSymbol,
-                            make.Block(0, generateEquals(classDecl, firstParameter.name))
-                    );
-                    // THIS ONE IS IMPORTANT! Otherwise, Flow.AssignAnalyzer#visitVarDef will have track=false
-                    methodDecl.params.head.pos = classDecl.pos;
-                    classDecl.defs = classDecl.defs.append(methodDecl);
+                {
+                    Name methodName = names.toString;
+                    List<Type> argTypes = List.nil();
+                    if (!containsMethod(classDecl, methodName)) {
+                        JCTree.JCMethodDecl methodDecl = make.MethodDef(
+                                new Symbol.MethodSymbol(
+                                        Flags.PUBLIC,
+                                        methodName,
+                                        new Type.MethodType(
+                                                argTypes,
+                                                syms.stringType,
+                                                List.nil(),
+                                                syms.methodClass
+                                        ),
+                                        syms.objectType.tsym
+                                ),
+                                make.Block(0, generateToString(classDecl))
+                        );
+                        classDecl.defs = classDecl.defs.append(methodDecl);
+                    }
+                }
+
+                {
+                    Name methodName = names.hashCode;
+                    List<Type> argTypes = List.nil();
+                    if (!containsMethod(classDecl, methodName)) {
+                        classDecl.defs = classDecl.defs.append(make.MethodDef(
+                                new Symbol.MethodSymbol(
+                                        Flags.PUBLIC,
+                                        methodName,
+                                        new Type.MethodType(
+                                                argTypes,
+                                                syms.intType,
+                                                List.nil(),
+                                                syms.methodClass
+                                        ),
+                                        syms.objectType.tsym
+                                ),
+                                make.Block(0, generateHashCode(classDecl))
+                        ));
+                    }
+                }
+
+                {
+                    Name methodName = names.equals;
+                    List<Type> argTypes = List.of(syms.objectType);
+                    if (!containsMethod(classDecl, methodName)) {
+                        Symbol.MethodSymbol methodSymbol = new Symbol.MethodSymbol(
+                                Flags.PUBLIC | Flags.FINAL,
+                                methodName,
+                                new Type.MethodType(
+                                        argTypes,
+                                        syms.booleanType,
+                                        List.nil(),
+                                        syms.methodClass
+                                ),
+                                syms.objectType.tsym
+                        );
+                        Symbol.VarSymbol firstParameter = methodSymbol.params().head;
+
+                        JCTree.JCMethodDecl methodDecl = make.MethodDef(
+                                methodSymbol,
+                                make.Block(0, generateEquals(classDecl, firstParameter.name))
+                        );
+                        // THIS ONE IS IMPORTANT! Otherwise, Flow.AssignAnalyzer#visitVarDef will have track=false
+                        methodDecl.params.head.pos = classDecl.pos;
+                        classDecl.defs = classDecl.defs.append(methodDecl);
+                    }
                 }
                 return super.visitClass(node, aVoid);
+            }
+
+            private boolean containsMethod(JCTree.JCClassDecl classDecl, Name name) {
+                return classDecl.defs.stream()
+                        .filter(JCTree.JCMethodDecl.class::isInstance)
+                        .map(JCTree.JCMethodDecl.class::cast)
+                        .anyMatch(def -> {
+                            if (def.getName() != name) {
+                                return false;
+                            }
+
+                            if (name == names.equals) {
+                                if (def.params.size() != 1) {
+                                    return false;
+                                }
+                                // TODO match arguments
+                            }
+
+                            return true;
+                        });
             }
         };
 
@@ -205,6 +243,20 @@ public class JabelCompilerPlugin implements Plugin {
             switch (e.getKind()) {
                 case ENTER:
                     recordsScanner.scan(e.getCompilationUnit(), null);
+                    new TreeScanner<Void, Void>() {
+                        @Override
+                        public Void visitClass(ClassTree node, Void aVoid) {
+                            if ("RECORD".equals(node.getKind().toString())) {
+                                JCTree.JCClassDecl classDecl = (JCTree.JCClassDecl) node;
+
+                                if (classDecl.extending == null) {
+                                    // Prevent implicit "extends java.lang.Record"
+                                    classDecl.extending = make.Type(syms.objectType);
+                                }
+                            }
+                            return super.visitClass(node, aVoid);
+                        }
+                    }.scan(e.getCompilationUnit(), null);
                     break;
                 case ANALYZE:
                     new TreeScanner<Void, Void>() {
@@ -219,9 +271,13 @@ public class JabelCompilerPlugin implements Plugin {
                                                 })
                                 ) {
                                     log.error(
-                                            ((JCTree.JCClassDecl) node
+                                            ((JCTree.JCClassDecl) node).pos(),
+                                            new JCDiagnostic.Error(
+                                                    "jabel",
+                                                    "missing.desugar.on.record",
+                                                    "Must be annotated with @Desugar"
+                                            )
                                     );
-                                    throw new IllegalStateException("Must be annotated with @Desugar");
                                 }
                             }
                             return super.visitClass(node, aVoid);
@@ -232,23 +288,15 @@ public class JabelCompilerPlugin implements Plugin {
 
         @Override
         public void finished(TaskEvent e) {
-            switch (e.getKind()) {
-            }
-        }
-
-        private boolean containsMethod(JCTree.JCClassDecl classDecl, Name name) {
-            return classDecl.defs.stream()
-                    .filter(JCTree.JCMethodDecl.class::isInstance)
-                    .map(JCTree.JCMethodDecl.class::cast)
-                    .anyMatch(def -> def.getName() == name);
         }
 
         private List<JCTree.JCStatement> generateToString(JCTree.JCClassDecl classDecl) {
+            // TODO check that it matches the original toString implementation
             JCTree.JCExpression stringBuilder = make.NewClass(
                     null,
                     null,
                     make.QualIdent(syms.stringBuilderType.tsym),
-                    List.of(make.Literal(classDecl.name + "{")),
+                    List.of(make.Literal(classDecl.name + "[")),
                     null
             );
 
@@ -287,7 +335,7 @@ public class JabelCompilerPlugin implements Plugin {
 
             stringBuilder = make.App(
                     make.Select(stringBuilder, names.append).setType(syms.stringBuilderType),
-                    List.of(make.Literal("}"))
+                    List.of(make.Literal("]"))
             );
 
             return List.of(make.Return(
@@ -347,7 +395,8 @@ public class JabelCompilerPlugin implements Plugin {
                     }
                     JCTree.JCVariableDecl fieldDecl = (JCTree.JCVariableDecl) member;
 
-                    // TODO primitive cmp?
+                    // TODO primitive cmp
+                    // TODO deepEquals for array fields
                     statements.add(make.If(
                             make.App(
                                     make.Select(
@@ -370,6 +419,7 @@ public class JabelCompilerPlugin implements Plugin {
         }
 
         private List<JCTree.JCStatement> generateHashCode(JCTree.JCClassDecl classDecl) {
+            // TODO "inline" Objects.hashCode to avoid allocations
             ListBuffer<JCTree.JCExpression> args = new ListBuffer<>();
             for (JCTree member : classDecl.getMembers()) {
                 if (!(member instanceof JCTree.JCVariableDecl)) {
