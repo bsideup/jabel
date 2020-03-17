@@ -130,18 +130,25 @@ Then, add Jabel as any other annotation processor:
 ```groovy
 dependencies {
     annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.2.0'
+    
+    // For @Desugar
+    compileOnly 'com.github.bsideup.jabel:jabel-javac-plugin:0.2.0'
 }
 ```
 
 Now, even if you set source/target/release to 8, the compiler will let you use some new language features.
 The full list of features will be printed during the compilation.
 ```groovy
-sourceCompatibility = 12 // for the IDE support
+sourceCompatibility = 14 // for the IDE support
 
-compileJava {
+tasks.withType(JavaCompile).all {
     options.compilerArgs = [
             "--release", "8" // Avoid using Java 12 APIs
     ]
+
+    if (System.getProperty("idea.active")) {
+        options.compilerArgs << '--enable-preview'
+    }
 }
 ```
 

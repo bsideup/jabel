@@ -5,16 +5,14 @@ plugins {
 sourceCompatibility = 14
 targetCompatibility = 8
 
-compileJava {
+tasks.withType(JavaCompile).all {
     options.compilerArgs = [
             "--release", "8",
     ]
-}
 
-compileTestJava {
-    options.compilerArgs = [
-            "--release", "8",
-    ]
+    if (System.getProperty("idea.active")) {
+        options.compilerArgs << '--enable-preview'
+    }
 }
 
 test {
