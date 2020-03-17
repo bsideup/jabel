@@ -143,11 +143,14 @@ sourceCompatibility = 14 // for the IDE support
 
 tasks.withType(JavaCompile).all {
     options.compilerArgs = [
-            "--release", "8" // Avoid using Java 12 APIs
+            "--release", "8", // Avoid using Java 9+ APIs
+            '--enable-preview',
     ]
 
-    if (System.getProperty("idea.active")) {
-        options.compilerArgs << '--enable-preview'
+    doFirst {
+        options.compilerArgs = options.compilerArgs.findAll {
+            it != '--enable-preview'
+        }
     }
 }
 ```

@@ -8,10 +8,13 @@ targetCompatibility = 8
 tasks.withType(JavaCompile).all {
     options.compilerArgs = [
             "--release", "8",
+            '--enable-preview',
     ]
 
-    if (System.getProperty("idea.active")) {
-        options.compilerArgs << '--enable-preview'
+    doFirst {
+        options.compilerArgs = options.compilerArgs.findAll {
+            it != '--enable-preview'
+        }
     }
 }
 
