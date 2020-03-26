@@ -180,9 +180,9 @@ public class com.example.JabelExample
 #### How to avoid using Java 9+ APIs in IntelliJ IDEA
 If you set `--release=8` flag, the compiler will report usages of APIs that were not in Java 8 (e.g. `StackWalker`). But if you wish to see such usages while editing the code, you can make IDEA highlight them for you:
 
-* Open Preferences
-* Choose "Editor -> Inspection"
+* On the bottom right click on the head with the hat
+* Click on "Configure inspections"
 * Find "Usages of API which isn't available at the configured language level"
-* Click "Higher than", and select "9 - Modules, private method in interfaces etc" from dropdown
+* Click "Higher than", and select "8 - Lambdas, type annotations etc." from dropdown
 
 ![IntelliJ IDEA Language Level Inspection](docs/images/idea-setting-language-level-inspection.png)
