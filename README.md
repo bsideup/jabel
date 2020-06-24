@@ -66,7 +66,7 @@ Jabel has to be added as an annotation processor to your maven-compiler-plugin:
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <release>13</release>
+                            <release>14</release>
                             <compilerArgs>
                                 <arg>--enable-preview</arg>
                             </compilerArgs>
@@ -90,12 +90,9 @@ Jabel has to be added as an annotation processor to your maven-compiler-plugin:
                     <annotationProcessorPath>
                         <groupId>com.github.bsideup.jabel</groupId>
                         <artifactId>jabel-javac-plugin</artifactId>
-                        <version>0.2.0</version>
+                        <version>0.3.0</version>
                     </annotationProcessorPath>
                 </annotationProcessorPaths>
-                <annotationProcessors>
-                    <annotationProcessor>com.github.bsideup.jabel.JabelJavacProcessor</annotationProcessor>
-                </annotationProcessors>
             </configuration>
         </plugin>
     </plugins>
