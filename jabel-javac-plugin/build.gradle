@@ -7,5 +7,5 @@ sourceCompatibility = targetCompatibility = 8
 
 dependencies {
     compile 'net.bytebuddy:byte-buddy:1.10.8'
-    compile 'net.bytebuddy:byte-buddy-agent:1.10.8'
+    compile 'net.bytebuddy:byte-buddy-agent:1.10.14'
 }
