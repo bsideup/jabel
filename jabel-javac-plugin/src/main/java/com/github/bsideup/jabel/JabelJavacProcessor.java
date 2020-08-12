@@ -66,6 +66,8 @@ public class JabelJavacProcessor implements Processor {
             .collect(Collectors.toSet());
 
     static {
+        // log that we've started, otherwise if there's certain types of errors, no output is seen at all from Jabel (e.g. errors compiling our code)
+        // helps for verifying Jabel is being picked up correctly from project settings
         log.info("Jabel static initialising ByteBuddy");
 
         ByteBuddyAgent.install();
