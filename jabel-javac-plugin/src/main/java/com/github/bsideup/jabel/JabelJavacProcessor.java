@@ -7,6 +7,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+import org.apache.maven.plugin.logging.SystemStreamLog;
 
 import javax.annotation.processing.Completion;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -29,7 +30,11 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 public class JabelJavacProcessor implements Processor {
+    private static org.apache.maven.plugin.logging.Log log = new SystemStreamLog();
 
+    /**
+     * Set of the all the features we want to force enable in our 8 target
+     */
     private static final Set<Source.Feature> ENABLED_FEATURES = Stream
             .of(
                     "PRIVATE_SAFE_VARARGS",
@@ -61,10 +66,19 @@ public class JabelJavacProcessor implements Processor {
             .collect(Collectors.toSet());
 
     static {
-        ByteBuddyAgent.install();
+        // log that we've started, otherwise if there's certain types of errors, no output is seen at all from Jabel (e.g. errors compiling our code)
+        // helps for verifying Jabel is being picked up correctly from project settings
+        log.info("Jabel static initialising ByteBuddy");
 
+        ByteBuddyAgent.install();
         ByteBuddy byteBuddy = new ByteBuddy();
 
+        /**
+         * Inject our code into the JDK version checks
+         *
+         * @see JavacParser#checkSourceLevel
+         * @see JavaTokenizer#checkSourceLevel
+         */
         for (Class<?> clazz : Arrays.asList(JavacParser.class, JavaTokenizer.class)) {
             byteBuddy
                     .redefine(clazz)
@@ -76,12 +90,18 @@ public class JabelJavacProcessor implements Processor {
                     .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
         }
 
+        /**
+         * For all the features in {@link #ENABLED_FEATURES}, override the min JDK level, reducing it to 8
+         *
+         * @see ENABLED_FEATURES
+          */
         try {
             Field field = Source.Feature.class.getDeclaredField("minLevel");
             field.setAccessible(true);
 
             for (Source.Feature feature : ENABLED_FEATURES) {
                 field.set(feature, Source.JDK8);
+                // sanity check our code
                 if (!feature.allowedInSource(Source.JDK8)) {
                     throw new IllegalStateException(feature.name() + " minLevel instrumentation failed!");
                 }
@@ -89,6 +109,7 @@ public class JabelJavacProcessor implements Processor {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        log.info("Jabel ByteBuddy initialisation complete");
     }
 
     @Override
@@ -98,7 +119,7 @@ public class JabelJavacProcessor implements Processor {
 
     @Override
     public void init(ProcessingEnvironment processingEnv) {
-        System.out.println(
+        log.debug(
                 ENABLED_FEATURES.stream()
                         .map(Enum::name)
                         .collect(Collectors.joining(
