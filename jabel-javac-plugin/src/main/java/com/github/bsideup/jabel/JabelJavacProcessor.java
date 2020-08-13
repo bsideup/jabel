@@ -113,20 +113,6 @@ public class JabelJavacProcessor implements Processor {
         }
     }
 
-    static public class PreviewFeatureCheckOverride {
-
-        /**
-         * On {@link Preview#isPreview} exit, override the return value to always be false.
-         */
-        @Advice.OnMethodExit
-        static public boolean isPreview(Source.Feature feature) {
-            log.debug("Feature being set to NOT preview: " + feature);
-            return false;
-        }
-    }
-
-
-
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.RELEASE_8;
