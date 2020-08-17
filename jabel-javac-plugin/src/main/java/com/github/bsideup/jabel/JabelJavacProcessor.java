@@ -7,6 +7,8 @@ import com.sun.tools.javac.parser.JavacParser;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper.ForDeclaredMethods;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 
 import javax.annotation.processing.Completion;
@@ -67,41 +69,24 @@ public class JabelJavacProcessor implements Processor {
         logInfo("Jabel static initialising ByteBuddy");
 
         ByteBuddyAgent.install();
-
         ByteBuddy byteBuddy = new ByteBuddy();
 
-        logInfo("Disabling source level check");
-        /**
-         * Inject our code into the JDK version checks
-         *
-         * @see JavacParser#checkSourceLevel
-         * @see JavaTokenizer#checkSourceLevel
-         */
-        for (Class<?> clazz : Arrays.asList(JavacParser.class, JavaTokenizer.class)) {
-            byteBuddy
-                    .redefine(clazz)
-                    .visit(
-                            Advice.to(CheckSourceLevelAdvice.class)
-                                    .on(named("checkSourceLevel").and(takesArguments(2)))
-                    )
-                    .make()
-                    .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
-        }
+        sourceLevelCheck(byteBuddy);
 
-        logInfo("Disabling preview feature flag checks");
-        // force javac to think no features are previews
-        Class<Preview> previewClass = Preview.class;
-        byteBuddy.redefine(previewClass)
-                .visit(Advice.to(PreviewAdvice.class).on(named("isPreview")))
-                .make()
-                .load(previewClass.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+        previewFeatureChecks(byteBuddy);
 
+        featureMinLevelChecks();
+
+        logInfo("Jabel ByteBuddy initialisation complete");
+    }
+
+    /**
+     * For all the features in {@link #ENABLED_FEATURES}, override the min JDK level, reducing it to 8
+     *
+     * @see #ENABLED_FEATURES
+     */
+    private static void featureMinLevelChecks() {
         logInfo("Disabling feature min level checks");
-        /**
-         * For all the features in {@link #ENABLED_FEATURES}, override the min JDK level, reducing it to 8
-         *
-         * @see ENABLED_FEATURES
-          */
         try {
             Field field = Source.Feature.class.getDeclaredField("minLevel");
             field.setAccessible(true);
@@ -115,7 +100,38 @@ public class JabelJavacProcessor implements Processor {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        logInfo("Jabel ByteBuddy initialisation complete");
+    }
+
+    /**
+     * Inject our code into the JDK version checks
+     *
+     * @see JavacParser#checkSourceLevel
+     * @see JavaTokenizer#checkSourceLevel
+     */
+    private static void sourceLevelCheck(ByteBuddy byteBuddy) {
+        logInfo("Disabling source level check");
+        for (Class<?> clazz : Arrays.asList(JavacParser.class, JavaTokenizer.class)) {
+            ForDeclaredMethods checkSourceLevelMethod = Advice.to(CheckSourceLevelAdvice.class)
+                    .on(named("checkSourceLevel").and(takesArguments(2)));
+            byteBuddy
+                    .redefine(clazz)
+                    .visit(checkSourceLevelMethod)
+                    .make()
+                    .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+        }
+    }
+
+    /**
+     * Force javac to think that no features are preview features
+     */
+    private static void previewFeatureChecks(ByteBuddy byteBuddy) {
+        logInfo("Disabling preview feature flag checks");
+        Class<Preview> previewClass = Preview.class;
+        ForDeclaredMethods isPreviewMethod = Advice.to(PreviewAdvice.class).on(named("isPreview"));
+        byteBuddy.redefine(previewClass)
+                .visit(isPreviewMethod)
+                .make()
+                .load(previewClass.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
     }
 
     static private void logInfo(String msg) {
