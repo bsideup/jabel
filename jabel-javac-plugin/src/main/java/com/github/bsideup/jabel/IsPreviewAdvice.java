@@ -4,12 +4,13 @@ import com.sun.tools.javac.code.Preview;
 import com.sun.tools.javac.code.Source;
 import net.bytebuddy.asm.Advice;
 
-public class PreviewAdvice {
+public class IsPreviewAdvice {
 
     static final boolean debug = false;
 
     /**
-     * On {@link Preview#isPreview} exit, override the return value to always be false.
+     * Force javac to think that no features are preview features - on {@link Preview#isPreview} exit, override the
+     * return value to always be false.
      */
     @Advice.OnMethodExit
     static public boolean isPreview(Source.Feature feature) {

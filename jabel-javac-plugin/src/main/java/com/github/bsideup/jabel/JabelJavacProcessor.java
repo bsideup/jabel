@@ -7,7 +7,6 @@ import com.sun.tools.javac.parser.JavacParser;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
-import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.asm.AsmVisitorWrapper.ForDeclaredMethods;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 
@@ -103,10 +102,11 @@ public class JabelJavacProcessor implements Processor {
     }
 
     /**
-     * Inject our code into the JDK version checks
+     * Intercept calls to {@link JavacParser#checkSourceLevel}
      *
      * @see JavacParser#checkSourceLevel
      * @see JavaTokenizer#checkSourceLevel
+     * @see CheckSourceLevelAdvice
      */
     private static void sourceLevelCheck(ByteBuddy byteBuddy) {
         logInfo("Disabling source level check");
@@ -122,12 +122,15 @@ public class JabelJavacProcessor implements Processor {
     }
 
     /**
-     * Force javac to think that no features are preview features
+     * Intercept call return from {@link Preview#isPreview}
+     * 
+     * @see Preview#isPreview
+     * @see IsPreviewAdvice
      */
     private static void previewFeatureChecks(ByteBuddy byteBuddy) {
         logInfo("Disabling preview feature flag checks");
         Class<Preview> previewClass = Preview.class;
-        ForDeclaredMethods isPreviewMethod = Advice.to(PreviewAdvice.class).on(named("isPreview"));
+        ForDeclaredMethods isPreviewMethod = Advice.to(IsPreviewAdvice.class).on(named("isPreview"));
         byteBuddy.redefine(previewClass)
                 .visit(isPreviewMethod)
                 .make()
