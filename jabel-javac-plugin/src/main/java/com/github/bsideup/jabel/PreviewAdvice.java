@@ -4,7 +4,7 @@ import com.sun.tools.javac.code.Preview;
 import com.sun.tools.javac.code.Source;
 import net.bytebuddy.asm.Advice;
 
-public class PreviewFeatureCheckOverride {
+public class PreviewAdvice {
 
     static final boolean debug = false;
 

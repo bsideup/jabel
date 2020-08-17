@@ -62,11 +62,15 @@ public class JabelJavacProcessor implements Processor {
             .collect(Collectors.toSet());
 
     static {
+        // log that we've started, otherwise if there's certain types of errors, no output is seen at all from Jabel (e.g. errors compiling our code)
+        // helps for verifying Jabel is being picked up correctly from project settings
+        logInfo("Jabel static initialising ByteBuddy");
+
         ByteBuddyAgent.install();
 
         ByteBuddy byteBuddy = new ByteBuddy();
 
-        log.info("Disabling source level check");
+        logInfo("Disabling source level check");
         /**
          * Inject our code into the JDK version checks
          *
@@ -84,15 +88,15 @@ public class JabelJavacProcessor implements Processor {
                     .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
         }
 
-        log.info("Disabling preview feature flag checks");
+        logInfo("Disabling preview feature flag checks");
         // force javac to think no features are previews
         Class<Preview> previewClass = Preview.class;
         byteBuddy.redefine(previewClass)
-                .visit(Advice.to(PreviewFeatureCheckOverride.class).on(named("isPreview")))
+                .visit(Advice.to(PreviewAdvice.class).on(named("isPreview")))
                 .make()
                 .load(previewClass.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
 
-        log.info("Disabling feature min level checks");
+        logInfo("Disabling feature min level checks");
         /**
          * For all the features in {@link #ENABLED_FEATURES}, override the min JDK level, reducing it to 8
          *
@@ -111,6 +115,11 @@ public class JabelJavacProcessor implements Processor {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        logInfo("Jabel ByteBuddy initialisation complete");
+    }
+
+    static private void logInfo(String msg) {
+        System.out.println(msg);
     }
 
     @Override
@@ -120,7 +129,7 @@ public class JabelJavacProcessor implements Processor {
 
     @Override
     public void init(ProcessingEnvironment processingEnv) {
-        System.out.println(
+        logInfo(
                 ENABLED_FEATURES.stream()
                         .map(Enum::name)
                         .collect(Collectors.joining(
