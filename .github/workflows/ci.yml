@@ -18,5 +18,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 13
+    - name: Gradle version
+      run: ./gradlew -version
     - name: Build with Gradle
       run: ./gradlew build
