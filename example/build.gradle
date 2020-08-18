@@ -19,6 +19,11 @@ compileTestJava {
 
 test {
     doFirst {
+        def javaVersion = System.getProperty("java.version").tokenize(".").get(0).toInteger()
+        if (javaVersion != 13) {
+            throw new IllegalStateException("Must run build on Java 13 (system reported: ${javaVersion})")
+        }
+
         def java8home = System.getenv("JAVA_HOME_8")
         if (!java8home) {
             throw new IllegalStateException("JAVA_HOME_8 must be set")
@@ -28,7 +33,7 @@ test {
 }
 
 dependencies {
-    annotationProcessor project(":jabel-javac-plugin")
+//    annotationProcessor project(":jabel-javac-plugin")
 
     testCompile 'junit:junit:4.12'
 }
