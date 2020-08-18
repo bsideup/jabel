@@ -70,11 +70,11 @@ public class JabelJavacProcessor implements Processor {
         ByteBuddyAgent.install();
         ByteBuddy byteBuddy = new ByteBuddy();
 
-//        sourceLevelCheck(byteBuddy);
+        sourceLevelCheck(byteBuddy);
 
 //        previewFeatureChecks(byteBuddy);
 
-//        featureMinLevelChecks();
+        featureMinLevelChecks();
 
         logInfo("Jabel ByteBuddy initialisation complete");
     }

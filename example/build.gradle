@@ -33,7 +33,7 @@ test {
 }
 
 dependencies {
-//    annotationProcessor project(":jabel-javac-plugin")
+    annotationProcessor project(":jabel-javac-plugin")
 
     testCompile 'junit:junit:4.12'
 }

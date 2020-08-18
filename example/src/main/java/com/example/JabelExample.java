@@ -65,18 +65,18 @@ public class JabelExample {
     }
 
 
-    public void whenSwitchingOnOperationSquareMe_thenWillReturnSquare() {
-        var me = 4;
-        var operation = "squareMe";
-        var result = switch (operation) {
-            case "doubleMe" -> {
-                yield me * 2;
-            }
-            case "squareMe" -> {
-                yield me * me;
-            }
-            default -> me;
-        };
-
-    }
+//    public void whenSwitchingOnOperationSquareMe_thenWillReturnSquare() {
+//        var me = 4;
+//        var operation = "squareMe";
+//        var result = switch (operation) {
+//            case "doubleMe" -> {
+//                yield me * 2;
+//            }
+//            case "squareMe" -> {
+//                yield me * me;
+//            }
+//            default -> me;
+//        };
+//
+//    }
 }

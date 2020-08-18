@@ -37,8 +37,12 @@ public class JabelExampleTest {
 """;
     }
 
+    /**
+     * JEP 354: Switch Expressions (Second Preview)
+     * https://openjdk.java.net/jeps/354
+     */
     @Test
-    public void whenSwitchingOnOperationSquareMe_thenWillReturnSquare() {
+    public void testJava13PreviewJep354() {
         var me = 4;
         var operation = "squareMe";
         var result = switch (operation) {
@@ -53,11 +57,11 @@ public class JabelExampleTest {
 
         assertEquals(16, result);
     }
-
-    @Test
-    public void tgesd(){
-        JabelExampleTest jabelExampleTest = new JabelExampleTest();
-        jabelExampleTest.whenSwitchingOnOperationSquareMe_thenWillReturnSquare();
-    }
+//
+//    @Test
+//    public void tgesd(){
+//        JabelExampleTest jabelExampleTest = new JabelExampleTest();
+//        jabelExampleTest.whenSwitchingOnOperationSquareMe_thenWillReturnSquare();
+//    }
 
 }
