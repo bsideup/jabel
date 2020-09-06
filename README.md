@@ -1,4 +1,4 @@
-# Jabel - use Javac 12+ syntax when targeting Java 8
+# Jabel - use modern Java 9-14 syntax when targeting Java 8
 
 > Because life is too short to wait for your users to upgrade their Java!
 
@@ -13,7 +13,7 @@ But, since most of features after Java 8 did not require a change in the bytecod
 
 ## How Jabel works
 
-Although Jabel is an annotation processor, it does not run any processing,
+Although Jabel is a javac compiler plugin, it does not run any processing,
 but instruments the java compiler classes and makes it treat some new Java 9+ languages features
 as they were supported in Java 8.
 
@@ -32,7 +32,7 @@ require the same target as the JVM because they get released altogether.
 As was previously described, Jabel makes the compiler think that certain features were developed
 for Java 8, and removes the checks that otherwise will report them as invalid for the target.
 
-It is important to understand that it will use the same code as for Java 12 and won't change
+It is important to understand that it will use the same desugaring code as for Java 9+ but won't change
 the result's classfile version, because the compilation phase will be done with Java 8 target.
 
 ## How to use
@@ -66,7 +66,7 @@ Jabel has to be added as an annotation processor to your maven-compiler-plugin:
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <release>13</release>
+                            <release>14</release>
                             <compilerArgs>
                                 <arg>--enable-preview</arg>
                             </compilerArgs>
@@ -77,29 +77,33 @@ Jabel has to be added as an annotation processor to your maven-compiler-plugin:
         </profile>
     </profiles>
 
-<build>
-    <plugins>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.1</version>
-            <configuration>
-                <!-- Make sure we're not using Java 9+ APIs -->
-                <release>8</release>
-                <annotationProcessorPaths>
-                    <annotationProcessorPath>
-                        <groupId>com.github.bsideup.jabel</groupId>
-                        <artifactId>jabel-javac-plugin</artifactId>
-                        <version>0.2.0</version>
-                    </annotationProcessorPath>
-                </annotationProcessorPaths>
-                <annotationProcessors>
-                    <annotationProcessor>com.github.bsideup.jabel.JabelJavacProcessor</annotationProcessor>
-                </annotationProcessors>
-            </configuration>
-        </plugin>
-    </plugins>
-</build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <!-- Make sure we're not using Java 9+ APIs -->
+                    <release>8</release>
+                    <source>14</source>
+                    <target>14</target>
+                    <compilerArgs>
+                        <arg>-Xplugin:jabel</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.bsideup.jabel</groupId>
+            <artifactId>jabel-javac-plugin</artifactId>
+            <version>0.3.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 ```
 
 Compile your project and verify that Jabel is installed and successfully reports:
@@ -129,10 +133,7 @@ repositories {
 Then, add Jabel as any other annotation processor:
 ```groovy
 dependencies {
-    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.2.0'
-    
-    // For @Desugar
-    compileOnly 'com.github.bsideup.jabel:jabel-javac-plugin:0.2.0'
+    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
 }
 ```
 
