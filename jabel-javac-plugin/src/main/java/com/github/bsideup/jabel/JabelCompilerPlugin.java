@@ -1,10 +1,11 @@
 package com.github.bsideup.jabel;
 
-import com.sun.source.util.JavacTask;
-import com.sun.source.util.Plugin;
-import com.sun.tools.javac.code.Source;
+import com.sun.source.util.*;
+import com.sun.tools.javac.api.JavacTaskImpl;
+import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.parser.JavaTokenizer;
 import com.sun.tools.javac.parser.JavacParser;
+import com.sun.tools.javac.util.*;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
@@ -40,7 +41,8 @@ public class JabelCompilerPlugin implements Plugin {
                     "TEXT_BLOCKS",
 
                     "PATTERN_MATCHING_IN_INSTANCEOF",
-                    "REIFIABLE_TYPES_INSTANCEOF"
+                    "REIFIABLE_TYPES_INSTANCEOF",
+                    "RECORDS"
             )
             .map(name -> {
                 try {
@@ -92,6 +94,10 @@ public class JabelCompilerPlugin implements Plugin {
                                 "\n"
                         ))
         );
+
+        Context context = ((JavacTaskImpl) task).getContext();
+
+        task.addTaskListener(new RecordsRetrofittingTaskListener(context));
     }
 
     @Override
