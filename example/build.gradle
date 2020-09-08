@@ -2,19 +2,20 @@ plugins {
     id "java"
 }
 
-sourceCompatibility = 13
+sourceCompatibility = 14
 targetCompatibility = 8
 
-compileJava {
+tasks.withType(JavaCompile).all {
     options.compilerArgs = [
             "--release", "8",
+            '--enable-preview',
     ]
-}
 
-compileTestJava {
-    options.compilerArgs = [
-            "--release", "8",
-    ]
+    doFirst {
+        options.compilerArgs = options.compilerArgs.findAll {
+            it != '--enable-preview'
+        }
+    }
 }
 
 test {
