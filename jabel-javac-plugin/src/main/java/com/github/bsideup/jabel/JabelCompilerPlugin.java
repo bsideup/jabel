@@ -1,5 +1,6 @@
 package com.github.bsideup.jabel;
 
+import com.google.auto.service.AutoService;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
 import com.sun.tools.javac.code.Source;
@@ -20,6 +21,7 @@ import java.util.stream.Stream;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
+@AutoService(Plugin.class)
 public class JabelCompilerPlugin implements Plugin {
 
     static final Set<Source.Feature> ENABLED_FEATURES = Stream

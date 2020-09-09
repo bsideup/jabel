@@ -12,11 +12,26 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 8
-    - name: Export Java 8 Home
-      run: echo "##[set-env name=JAVA_HOME_8;]$JAVA_HOME"
+    - name: Export Java 8 toolchain
+      run: |
+        cat << 'EOF' >> $HOME/.m2/toolchains.xml
+        <toolchains>
+          <toolchain>
+            <type>jdk</type>
+            <provides>
+              <version>1.8</version>
+              <vendor>adoptopenjdk</vendor>
+              <id>for_mevenide</id>
+            </provides>
+            <configuration>
+              <jdkHome>$JAVA_HOME</jdkHome>
+            </configuration>
+          </toolchain>
+        </toolchains>
+        EOF
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
         java-version: 14
-    - name: Build with Gradle
-      run: ./gradlew build
+    - name: Build with Maven
+      run: ./mvnw verify
