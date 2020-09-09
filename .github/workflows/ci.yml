@@ -14,7 +14,7 @@ jobs:
         java-version: 8
     - name: Export Java 8 toolchain
       run: |
-        cat << 'EOF' >> $HOME/.m2/toolchains.xml
+        cat << "EOF" >> $HOME/.m2/toolchains.xml
         <toolchains>
           <toolchain>
             <type>jdk</type>
