@@ -14,14 +14,12 @@ jobs:
         java-version: 8
     - name: Export Java 8 toolchain
       run: |
-        cat << "EOF" >> $HOME/.m2/toolchains.xml
+        cat << EOF > $HOME/.m2/toolchains.xml
         <toolchains>
           <toolchain>
             <type>jdk</type>
             <provides>
               <version>1.8</version>
-              <vendor>adoptopenjdk</vendor>
-              <id>for_mevenide</id>
             </provides>
             <configuration>
               <jdkHome>$JAVA_HOME</jdkHome>
