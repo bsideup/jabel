@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  release:
+    types:
+      - prereleased
+      - released
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 14
+      - name: Deploy with Gradle
+        env:
+          GRADLE_PUBLISH_REPO_URL: ${{ secrets.GRADLE_PUBLISH_REPO_URL }}
+          GRADLE_PUBLISH_MAVEN_USER: ${{ secrets.GRADLE_PUBLISH_MAVEN_USER }}
+          GRADLE_PUBLISH_MAVEN_PASSWORD: ${{ secrets.GRADLE_PUBLISH_MAVEN_PASSWORD }}
+        run: ./gradlew --no-daemon -Pversion=$(git tag --points-at HEAD) publish

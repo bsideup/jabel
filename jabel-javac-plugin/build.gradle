@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "maven"
+    id "maven-publish"
 }
 
 sourceCompatibility = targetCompatibility = 8
@@ -8,4 +8,29 @@ sourceCompatibility = targetCompatibility = 8
 dependencies {
     compile 'net.bytebuddy:byte-buddy:1.10.14'
     compile 'net.bytebuddy:byte-buddy-agent:1.10.14'
+}
+
+
+task sourcesJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allJava
+}
+
+javadoc {
+    options.source = "8"
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    classifier = 'javadoc'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) { publication ->
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
 }
