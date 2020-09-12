@@ -37,20 +37,8 @@ the result's classfile version, because the compilation phase will be done with 
 
 ## How to use
 
-The plugin is distributed with [Jitpack](https://jitpack.io)
-
 ### Maven
-Make sure you have Jitpack added to the repositories list:
-```xml
-<repositories>
-    <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-    </repository>
-</repositories>
-```
-
-Jabel has to be added as an annotation processor to your maven-compiler-plugin:
+Jabel has to be enabled as a Javac plugin in your maven-compiler-plugin:
 ```xml
     <profiles>
         <profile>
@@ -123,14 +111,7 @@ Jabel: initialized. Enabled features:
 ```
 
 ### Gradle
-First, you need to add Jitpack to your repository list:
-```groovy
-repositories {
-    maven { url 'https://jitpack.io' }
-}
-```
-
-Then, add Jabel as any other annotation processor:
+First, add Jabel as any other annotation processor:
 ```groovy
 dependencies {
     annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
