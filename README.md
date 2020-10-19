@@ -76,6 +76,7 @@ Jabel has to be enabled as a Javac plugin in your maven-compiler-plugin:
                     <release>8</release>
                     <source>14</source>
                     <target>14</target>
+                    <!-- The following setting can be avoided on Java 14 and higher -->
                     <compilerArgs>
                         <arg>-Xplugin:jabel</arg>
                     </compilerArgs>
@@ -128,6 +129,8 @@ tasks.withType(JavaCompile).all {
             "--release", "8", // Avoid using Java 9+ APIs
             '--enable-preview',
     ]
+    // The following line can be omitted on Java 14 and higher
+    options.compilerArgs << '-Xplugin:jabel'
 
     doFirst {
         options.compilerArgs = options.compilerArgs.findAll {
