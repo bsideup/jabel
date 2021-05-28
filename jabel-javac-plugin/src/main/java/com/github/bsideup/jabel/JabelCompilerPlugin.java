@@ -8,6 +8,7 @@ import net.bytebuddy.utility.JavaModule;
 import java.lang.instrument.Instrumentation;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class JabelCompilerPlugin implements Plugin {
@@ -20,12 +21,15 @@ public class JabelCompilerPlugin implements Plugin {
         HashMap<String, Set<JavaModule>> extraExports = new HashMap<>();
         extraExports.put("com.sun.tools.javac.code", Collections.singleton(jabelModule));
         extraExports.put("com.sun.tools.javac.parser", Collections.singleton(jabelModule));
+        Map<String, Set<JavaModule>> extraOpens = Collections.singletonMap(
+                "com.sun.tools.javac.code", Collections.singleton(jabelModule)
+        );
         JavaModule.ofType(JavacTask.class)
                 .modify(
                         instrumentation,
                         Collections.emptySet(),
                         extraExports,
-                        Collections.emptyMap(),
+                        extraOpens,
                         Collections.emptySet(),
                         Collections.emptyMap()
                 );
