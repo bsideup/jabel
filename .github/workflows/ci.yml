@@ -13,10 +13,10 @@ jobs:
       with:
         java-version: 8
     - name: Export Java 8 Home
-      run: echo "##[set-env name=JAVA_HOME_8;]$JAVA_HOME"
+      run: echo "JAVA_HOME_8=$JAVA_HOME" >> $GITHUB_ENV
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
-        java-version: 14
+        java-version: 16
     - name: Build with Gradle
       run: ./gradlew build
