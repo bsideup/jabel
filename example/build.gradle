@@ -19,12 +19,10 @@ tasks.withType(JavaCompile).all {
 }
 
 test {
-    doFirst {
-        def java8home = System.getenv("JAVA_HOME_8")
-        if (!java8home) {
-            throw new IllegalStateException("JAVA_HOME_8 must be set")
-        }
-        executable = "$java8home/bin/java"
+    sourceCompatibility = targetCompatibility = 8
+
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 
