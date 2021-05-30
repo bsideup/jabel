@@ -41,7 +41,7 @@ public class JabelCompilerPlugin implements Plugin {
                 Collections.emptyMap()
         );
 
-        Set<Source.Feature> ENABLED_FEATURES = Stream
+        Set<Source.Feature> enabledFeatures = Stream
                 .of(
                         "PRIVATE_SAFE_VARARGS",
 
@@ -88,7 +88,7 @@ public class JabelCompilerPlugin implements Plugin {
             Field field = Source.Feature.class.getDeclaredField("minLevel");
             field.setAccessible(true);
 
-            for (Source.Feature feature : ENABLED_FEATURES) {
+            for (Source.Feature feature : enabledFeatures) {
                 field.set(feature, Source.JDK8);
                 if (!feature.allowedInSource(Source.JDK8)) {
                     throw new IllegalStateException(feature.name() + " minLevel instrumentation failed!");
@@ -99,7 +99,7 @@ public class JabelCompilerPlugin implements Plugin {
         }
 
         System.out.println(
-                ENABLED_FEATURES.stream()
+                enabledFeatures.stream()
                         .map(Enum::name)
                         .collect(Collectors.joining(
                                 "\n\t- ",
