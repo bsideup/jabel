@@ -2,24 +2,15 @@ package com.github.bsideup.jabel;
 
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
-import com.sun.tools.javac.code.Source;
-import com.sun.tools.javac.comp.Attr;
-import com.sun.tools.javac.comp.Check;
-import com.sun.tools.javac.comp.Resolve;
-import com.sun.tools.javac.parser.JavaTokenizer;
-import com.sun.tools.javac.parser.JavacParser;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.MemberSubstitution;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
-import net.bytebuddy.utility.JavaModule;
+import net.bytebuddy.pool.TypePool;
 
-import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Arrays;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -27,75 +18,42 @@ public class JabelCompilerPlugin implements Plugin {
 
     @Override
     public void init(JavacTask task, String... args) {
-        Instrumentation instrumentation = ByteBuddyAgent.install();
-
-        JavaModule jabelModule = JavaModule.ofType(JabelCompilerPlugin.class);
-        JavaModule.ofType(JavacTask.class).modify(
-                instrumentation,
-                Collections.emptySet(),
-                new HashMap<String, Set<JavaModule>>() {{
-                    put("com.sun.tools.javac.code", Collections.singleton(jabelModule));
-                    put("com.sun.tools.javac.parser", Collections.singleton(jabelModule));
-                }},
-                new HashMap<String, Set<JavaModule>>() {{
-                    put("com.sun.tools.javac.code", Collections.singleton(jabelModule));
-                    put("com.sun.tools.javac.comp", Collections.singleton(jabelModule));
-                }},
-                Collections.emptySet(),
-                Collections.emptyMap()
-        );
-
-        Set<Source.Feature> enabledFeatures = Stream
-                .of(
-                        "PRIVATE_SAFE_VARARGS",
-
-                        "SWITCH_EXPRESSION",
-                        "SWITCH_RULE",
-                        "SWITCH_MULTIPLE_CASE_LABELS",
-
-                        "LOCAL_VARIABLE_TYPE_INFERENCE",
-                        "VAR_SYNTAX_IMPLICIT_LAMBDAS",
-
-                        "DIAMOND_WITH_ANONYMOUS_CLASS_CREATION",
-
-                        "EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES",
-
-                        "TEXT_BLOCKS",
-
-                        "PATTERN_MATCHING_IN_INSTANCEOF",
-                        "REIFIABLE_TYPES_INSTANCEOF"
-                )
-                .map(name -> {
-                    try {
-                        return Source.Feature.valueOf(name);
-                    } catch (IllegalArgumentException e) {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        ByteBuddyAgent.install();
 
         ByteBuddy byteBuddy = new ByteBuddy();
 
-        for (Class<?> clazz : Arrays.asList(JavacParser.class, JavaTokenizer.class)) {
+        ClassLoader classLoader = JavacTask.class.getClassLoader();
+        ClassFileLocator classFileLocator = ClassFileLocator.ForClassLoader.of(classLoader);
+        TypePool typePool = TypePool.ClassLoading.of(classLoader);
+
+        for (String className : Arrays.asList(
+                "com.sun.tools.javac.parser.JavacParser",
+                "com.sun.tools.javac.parser.JavaTokenizer"
+        )) {
             byteBuddy
-                    .redefine(clazz)
+                    .redefine(
+                            typePool.describe(className).resolve(),
+                            classFileLocator
+                    )
                     .visit(
                             Advice.to(CheckSourceLevelAdvice.class)
                                     .on(named("checkSourceLevel").and(takesArguments(2)))
                     )
                     .make()
-                    .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+                    .load(classLoader, ClassReloadingStrategy.fromInstalledAgent());
         }
 
-        for (Class<?> clazz : Arrays.asList(
-                Check.class,
-                JavacParser.class,
-                Attr.class,
-                Resolve.class
+        for (String className : Arrays.asList(
+                "com.sun.tools.javac.comp.Check",
+                "com.sun.tools.javac.parser.JavacParser",
+                "com.sun.tools.javac.comp.Attr",
+                "com.sun.tools.javac.comp.Resolve"
         )) {
             byteBuddy
-                    .redefine(clazz)
+                    .redefine(
+                            typePool.describe(className).resolve(),
+                            classFileLocator
+                    )
                     .visit(
                             MemberSubstitution.relaxed()
                                     .field(named("allowRecords"))
@@ -104,32 +62,22 @@ public class JabelCompilerPlugin implements Plugin {
                                     .on(any())
                     )
                     .make()
-                    .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+                    .load(classLoader, ClassReloadingStrategy.fromInstalledAgent());
         }
 
-        try {
-            Field field = Source.Feature.class.getDeclaredField("minLevel");
-            field.setAccessible(true);
+        byteBuddy
+                .redefine(
+                        typePool.describe("com.sun.tools.javac.code.Source$Feature").resolve(),
+                        classFileLocator
+                )
+                .visit(
+                        Advice.to(AllowedInSourceAdvice.class)
+                                .on(named("allowedInSource").and(takesArguments(1)))
+                )
+                .make()
+                .load(classLoader, ClassReloadingStrategy.fromInstalledAgent());
 
-            for (Source.Feature feature : enabledFeatures) {
-                field.set(feature, Source.JDK8);
-                if (!feature.allowedInSource(Source.JDK8)) {
-                    throw new IllegalStateException(feature.name() + " minLevel instrumentation failed!");
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        System.out.println(
-                enabledFeatures.stream()
-                        .map(Enum::name)
-                        .collect(Collectors.joining(
-                                "\n\t- ",
-                                "Jabel: initialized. Enabled features: \n\t- ",
-                                "\n"
-                        ))
-        );
+        System.out.println("Jabel: initialized");
     }
 
     @Override
