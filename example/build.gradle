@@ -4,16 +4,10 @@ plugins {
 
 configure([tasks.compileJava]) {
     sourceCompatibility = 16
+    options.release = 8
 
-    options.compilerArgs = [
-            "--release", "8",
-            '--enable-preview',
-    ]
-
-    doFirst {
-        options.compilerArgs = options.compilerArgs.findAll {
-            it != '--enable-preview'
-        }
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(16)
     }
 }
 
