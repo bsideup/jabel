@@ -3,11 +3,15 @@ package com.github.bsideup.jabel;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
 import com.sun.tools.javac.code.Source;
+import com.sun.tools.javac.comp.Attr;
+import com.sun.tools.javac.comp.Check;
+import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.parser.JavaTokenizer;
 import com.sun.tools.javac.parser.JavacParser;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.asm.MemberSubstitution;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.utility.JavaModule;
 
@@ -17,8 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class JabelCompilerPlugin implements Plugin {
 
@@ -34,9 +37,10 @@ public class JabelCompilerPlugin implements Plugin {
                     put("com.sun.tools.javac.code", Collections.singleton(jabelModule));
                     put("com.sun.tools.javac.parser", Collections.singleton(jabelModule));
                 }},
-                Collections.singletonMap(
-                        "com.sun.tools.javac.code", Collections.singleton(jabelModule)
-                ),
+                new HashMap<String, Set<JavaModule>>() {{
+                    put("com.sun.tools.javac.code", Collections.singleton(jabelModule));
+                    put("com.sun.tools.javac.comp", Collections.singleton(jabelModule));
+                }},
                 Collections.emptySet(),
                 Collections.emptyMap()
         );
@@ -79,6 +83,25 @@ public class JabelCompilerPlugin implements Plugin {
                     .visit(
                             Advice.to(CheckSourceLevelAdvice.class)
                                     .on(named("checkSourceLevel").and(takesArguments(2)))
+                    )
+                    .make()
+                    .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+        }
+
+        for (Class<?> clazz : Arrays.asList(
+                Check.class,
+                JavacParser.class,
+                Attr.class,
+                Resolve.class
+        )) {
+            byteBuddy
+                    .redefine(clazz)
+                    .visit(
+                            MemberSubstitution.relaxed()
+                                    .field(named("allowRecords"))
+                                    .onRead()
+                                    .replaceWith(ConstantMemberSubstitution.of(true))
+                                    .on(any())
                     )
                     .make()
                     .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());

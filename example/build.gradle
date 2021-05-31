@@ -2,7 +2,7 @@ plugins {
     id "java"
 }
 
-sourceCompatibility = 14
+sourceCompatibility = 16
 targetCompatibility = 8
 
 tasks.withType(JavaCompile).all {
@@ -19,8 +19,6 @@ tasks.withType(JavaCompile).all {
 }
 
 test {
-    sourceCompatibility = targetCompatibility = 8
-
     javaLauncher = javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(8)
     }
