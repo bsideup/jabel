@@ -7,6 +7,7 @@ import com.sun.tools.javac.parser.JavaTokenizer;
 import com.sun.tools.javac.parser.JavacParser;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.agent.ByteBuddyAgent.AttachmentProvider;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.utility.JavaModule;
@@ -24,7 +25,17 @@ public class JabelCompilerPlugin implements Plugin {
 
     @Override
     public void init(JavacTask task, String... args) {
-        Instrumentation instrumentation = ByteBuddyAgent.install();
+        Instrumentation instrumentation = ByteBuddyAgent.install(
+                new AttachmentProvider.Compound(
+                        AttachmentProvider.ForJ9Vm.INSTANCE,
+                        AttachmentProvider.ForStandardToolsJarVm.JVM_ROOT,
+                        AttachmentProvider.ForStandardToolsJarVm.JDK_ROOT,
+                        AttachmentProvider.ForStandardToolsJarVm.MACINTOSH,
+                        AttachmentProvider.ForUserDefinedToolsJar.INSTANCE,
+                        AttachmentProvider.ForEmulatedAttachment.INSTANCE,
+                        AttachmentProvider.DEFAULT
+                )
+        );
 
         JavaModule jabelModule = JavaModule.ofType(JabelCompilerPlugin.class);
         JavaModule.ofType(JavacTask.class).modify(
