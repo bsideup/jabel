@@ -111,28 +111,26 @@ Jabel: initialized. Enabled features:
 	- SWITCH_RULE
 ```
 
-### Gradle
-First, add Jabel as any other annotation processor:
+### Gradle 6 or older
+Use the following snippet to add Jabel to your Gradle build:
 ```groovy
 dependencies {
     annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
 }
-```
 
-Now, even if you set source/target/release to 8, the compiler will let you use some new language features.
-The full list of features will be printed during the compilation.
-```groovy
-sourceCompatibility = 14 // for the IDE support
+// Add more tasks if needed, such as compileTestJava
+configure([tasks.compileJava]) {
+    sourceCompatibility = 14 // for the IDE support
 
-tasks.withType(JavaCompile).all {
     options.compilerArgs = [
-            "--release", "8", // Avoid using Java 9+ APIs
+            "--release", "8",
             '--enable-preview',
     ]
-    // The following line can be omitted on Java 14 and higher
-    options.compilerArgs << '-Xplugin:jabel'
 
     doFirst {
+        // Can be omitted on Java 14 and higher
+        options.compilerArgs << '-Xplugin:jabel'
+
         options.compilerArgs = options.compilerArgs.findAll {
             it != '--enable-preview'
         }
@@ -167,6 +165,33 @@ Classfile /Users/bsideup/Work/bsideup/jabel/example/build/classes/java/main/com/
 public class com.example.JabelExample
   minor version: 0
   major version: 52
+```
+
+### Gradle 7 and newer
+Gradle 7 supports toolchains and makes it extremely easy to configure everything:
+```groovy
+configure([tasks.compileJava]) {
+    sourceCompatibility = 16 // for the IDE support
+    options.release = 8
+
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(16)
+    }
+}
+```
+(Java 16 does not require the preview flag for any language feature supported by Jabel)
+
+You can also force your tests to run with Java 8:
+```groovy
+compileTestJava {
+    sourceCompatibility = targetCompatibility = 8
+}
+
+test {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
 ```
 
 ## IDE support
