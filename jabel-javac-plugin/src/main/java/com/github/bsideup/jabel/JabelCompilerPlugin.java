@@ -2,6 +2,7 @@ package com.github.bsideup.jabel;
 
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
+import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.code.Source;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
@@ -14,7 +15,10 @@ import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.JavaModule;
 
+import java.lang.instrument.Instrumentation;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,7 +70,7 @@ public class JabelCompilerPlugin implements Plugin {
             );
         }};
 
-        ByteBuddyAgent.install();
+        Instrumentation instrumentation = ByteBuddyAgent.install();
 
         ByteBuddy byteBuddy = new ByteBuddy();
 
@@ -84,6 +88,23 @@ public class JabelCompilerPlugin implements Plugin {
                     .make()
                     .load(classLoader, ClassReloadingStrategy.fromInstalledAgent());
         });
+
+        JavaModule jabelModule = JavaModule.ofType(JabelCompilerPlugin.class);
+        JavaModule.ofType(JavacTask.class).modify(
+                instrumentation,
+                Collections.emptySet(),
+                Collections.emptyMap(),
+                new HashMap<String, java.util.Set<JavaModule>>() {{
+                    put("com.sun.tools.javac.api", Collections.singleton(jabelModule));
+                    put("com.sun.tools.javac.tree", Collections.singleton(jabelModule));
+                    put("com.sun.tools.javac.code", Collections.singleton(jabelModule));
+                    put("com.sun.tools.javac.util", Collections.singleton(jabelModule));
+                }},
+                Collections.emptySet(),
+                Collections.emptyMap()
+        );
+
+        task.addTaskListener(new RecordsRetrofittingTaskListener(((JavacTaskImpl) task).getContext()));
 
         System.out.println("Jabel: initialized");
     }
@@ -117,6 +138,7 @@ public class JabelCompilerPlugin implements Plugin {
                 case "TEXT_BLOCKS":
                 case "PATTERN_MATCHING_IN_INSTANCEOF":
                 case "REIFIABLE_TYPES_INSTANCEOF":
+                case "RECORDS":
                     //noinspection UnusedAssignment
                     source = Source.DEFAULT;
                     break;

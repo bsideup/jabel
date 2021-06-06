@@ -6,11 +6,6 @@ import static org.junit.Assert.*;
 
 public class JabelExampleTest {
 
-    @Test(expected = ClassNotFoundException.class)
-    public void isJava8() throws Exception {
-        Class.forName("java.lang.StackWalker");
-    }
-
     @Test
     public void shouldWork() {
         JabelExample jabelExample = new JabelExample();
