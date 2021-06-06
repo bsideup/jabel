@@ -12,6 +12,7 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.asm.MemberSubstitution;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -103,8 +104,9 @@ public class JabelCompilerPlugin implements Plugin {
         });
 
         JavaModule jabelModule = JavaModule.ofType(JabelCompilerPlugin.class);
-        JavaModule.ofType(JavacTask.class).modify(
+        ClassInjector.UsingInstrumentation.redefineModule(
                 ByteBuddyAgent.getInstrumentation(),
+                JavaModule.ofType(JavacTask.class),
                 Collections.emptySet(),
                 Collections.emptyMap(),
                 new HashMap<String, java.util.Set<JavaModule>>() {{
