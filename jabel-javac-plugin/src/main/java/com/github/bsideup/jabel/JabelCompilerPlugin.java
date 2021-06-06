@@ -5,6 +5,7 @@ import com.sun.source.util.Plugin;
 import com.sun.tools.javac.code.Source;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.agent.ByteBuddyAgent.AttachmentProvider;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.asm.MemberSubstitution;
@@ -66,7 +67,20 @@ public class JabelCompilerPlugin implements Plugin {
             );
         }};
 
-        ByteBuddyAgent.install();
+        try {
+            ByteBuddyAgent.install();
+        } catch (Exception e) {
+            ByteBuddyAgent.install(
+                    new AttachmentProvider.Compound(
+                            AttachmentProvider.ForJ9Vm.INSTANCE,
+                            AttachmentProvider.ForStandardToolsJarVm.JVM_ROOT,
+                            AttachmentProvider.ForStandardToolsJarVm.JDK_ROOT,
+                            AttachmentProvider.ForStandardToolsJarVm.MACINTOSH,
+                            AttachmentProvider.ForUserDefinedToolsJar.INSTANCE,
+                            AttachmentProvider.ForEmulatedAttachment.INSTANCE
+                    )
+            );
+        }
 
         ByteBuddy byteBuddy = new ByteBuddy();
 
