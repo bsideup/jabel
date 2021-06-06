@@ -1,0 +1,22 @@
+version: 2
+updates:
+- package-ecosystem: gradle
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "07:00"
+    timezone: Europe/Berlin
+  open-pull-requests-limit: 99
+  ignore:
+  - dependency-name: net.bytebuddy:byte-buddy-agent
+    versions:
+    - 1.10.19
+    - 1.10.20
+  - dependency-name: net.bytebuddy:byte-buddy
+    versions:
+    - 1.10.19
+    - 1.10.20
+  - dependency-name: junit:junit
+    versions:
+    - 4.13.1
+  rebase-strategy: disabled
