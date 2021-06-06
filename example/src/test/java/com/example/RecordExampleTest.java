@@ -22,7 +22,7 @@ public class RecordExampleTest {
 
         assertEquals(
                 "RecordExample[i=42,s=yeah,l=100500,f=0.5,d=5.0,arr=[Ljava.lang.String;@hash]",
-                Objects.toString(r).replaceAll("@[a-f0-9]{8}", "@hash")
+                Objects.toString(r).replaceAll(";@[a-f0-9]+", ";@hash")
         );
     }
 
