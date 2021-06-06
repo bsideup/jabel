@@ -99,16 +99,7 @@ Compile your project and verify that Jabel is installed and successfully reports
 ```
 [INFO] --- maven-compiler-plugin:3.8.1:compile (default-compile) @ tester.thirteen ---
 [INFO] Changes detected - recompiling the module!
-Jabel: initialized. Enabled features:
-	- VAR_SYNTAX_IMPLICIT_LAMBDAS
-	- LOCAL_VARIABLE_TYPE_INFERENCE
-	- PRIVATE_SAFE_VARARGS
-	- SWITCH_MULTIPLE_CASE_LABELS
-	- EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES
-	- SWITCH_EXPRESSION
-	- DIAMOND_WITH_ANONYMOUS_CLASS_CREATION
-	- TEXT_BLOCKS
-	- SWITCH_RULE
+Jabel: initialized.
 ```
 
 ### Gradle 6 or older
@@ -143,15 +134,7 @@ Compile your project and verify that the result is still a valid Java 8 bytecode
 $ ./gradlew --no-daemon clean :example:test
 
 > Task :example:compileJava
-Jabel: initialized. Enabled features:
-        - LOCAL_VARIABLE_TYPE_INFERENCE
-        - SWITCH_EXPRESSION
-        - PRIVATE_SAFE_VARARGS
-        - SWITCH_MULTIPLE_CASE_LABELS
-        - VAR_SYNTAX_IMPLICIT_LAMBDAS
-        - DIAMOND_WITH_ANONYMOUS_CLASS_CREATION
-        - SWITCH_RULE
-        - EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES
+Jabel: initialized.
 
 
 BUILD SUCCESSFUL in 6s
