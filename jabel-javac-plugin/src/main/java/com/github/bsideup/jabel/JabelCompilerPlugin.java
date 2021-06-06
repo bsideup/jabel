@@ -1,103 +1,91 @@
 package com.github.bsideup.jabel;
 
-import com.sun.source.util.*;
-import com.sun.tools.javac.api.JavacTaskImpl;
-import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.parser.JavaTokenizer;
-import com.sun.tools.javac.parser.JavacParser;
-import com.sun.tools.javac.util.*;
+import com.sun.source.util.JavacTask;
+import com.sun.source.util.Plugin;
+import com.sun.tools.javac.code.Source;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.asm.MemberSubstitution;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+import net.bytebuddy.implementation.bytecode.Removal;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
+import net.bytebuddy.pool.TypePool;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.HashMap;
+import java.util.Map;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class JabelCompilerPlugin implements Plugin {
 
-    static final Set<Source.Feature> ENABLED_FEATURES = Stream
-            .of(
-                    "PRIVATE_SAFE_VARARGS",
-
-                    "SWITCH_EXPRESSION",
-                    "SWITCH_RULE",
-                    "SWITCH_MULTIPLE_CASE_LABELS",
-
-                    "LOCAL_VARIABLE_TYPE_INFERENCE",
-                    "VAR_SYNTAX_IMPLICIT_LAMBDAS",
-
-                    "DIAMOND_WITH_ANONYMOUS_CLASS_CREATION",
-
-                    "EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES",
-
-                    "TEXT_BLOCKS",
-
-                    "PATTERN_MATCHING_IN_INSTANCEOF",
-                    "REIFIABLE_TYPES_INSTANCEOF",
-                    "RECORDS"
-            )
-            .map(name -> {
-                try {
-                    return Source.Feature.valueOf(name);
-                } catch (IllegalArgumentException e) {
-                    return null;
-                }
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-
     @Override
     public void init(JavacTask task, String... args) {
+        Map<String, AsmVisitorWrapper> visitors = new HashMap<String, AsmVisitorWrapper>() {{
+            // Disable the preview feature check
+            AsmVisitorWrapper checkSourceLevelAdvice = Advice.to(CheckSourceLevelAdvice.class)
+                    .on(named("checkSourceLevel").and(takesArguments(2)));
+
+            // Allow features that were introduced together with Records (local enums, static inner members, ...)
+            AsmVisitorWrapper allowRecordsEraFeaturesAdvice = MemberSubstitution.relaxed()
+                    .field(named("allowRecords"))
+                    .onRead()
+                    .replaceWith(
+                            (instrumentedType, instrumentedMethod, typePool) -> {
+                                return (targetType, target, parameters, result, freeOffset) -> {
+                                    return new StackManipulation.Compound(
+                                            // remove aload_0
+                                            Removal.of(targetType),
+                                            IntegerConstant.forValue(true)
+                                    );
+                                };
+                            }
+                    )
+                    .on(any());
+
+            put("com.sun.tools.javac.parser.JavacParser",
+                    new AsmVisitorWrapper.Compound(
+                            checkSourceLevelAdvice,
+                            allowRecordsEraFeaturesAdvice
+                    )
+            );
+            put("com.sun.tools.javac.parser.JavaTokenizer", checkSourceLevelAdvice);
+
+            put("com.sun.tools.javac.comp.Check", allowRecordsEraFeaturesAdvice);
+            put("com.sun.tools.javac.comp.Attr", allowRecordsEraFeaturesAdvice);
+            put("com.sun.tools.javac.comp.Resolve", allowRecordsEraFeaturesAdvice);
+
+            // Lower the source requirement for supported features
+            put(
+                    "com.sun.tools.javac.code.Source$Feature",
+                    Advice.to(AllowedInSourceAdvice.class)
+                            .on(named("allowedInSource").and(takesArguments(1)))
+            );
+        }};
+
         ByteBuddyAgent.install();
 
         ByteBuddy byteBuddy = new ByteBuddy();
 
-        for (Class<?> clazz : Arrays.asList(JavacParser.class, JavaTokenizer.class)) {
+        ClassLoader classLoader = JavacTask.class.getClassLoader();
+        ClassFileLocator classFileLocator = ClassFileLocator.ForClassLoader.of(classLoader);
+        TypePool typePool = TypePool.ClassLoading.of(classLoader);
+
+        visitors.forEach((className, visitor) -> {
             byteBuddy
-                    .redefine(clazz)
-                    .visit(
-                            Advice.to(CheckSourceLevelAdvice.class)
-                                    .on(named("checkSourceLevel").and(takesArguments(2)))
+                    .redefine(
+                            typePool.describe(className).resolve(),
+                            classFileLocator
                     )
+                    .visit(visitor)
                     .make()
-                    .load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
-        }
+                    .load(classLoader, ClassReloadingStrategy.fromInstalledAgent());
+        });
 
-        try {
-            Field field = Source.Feature.class.getDeclaredField("minLevel");
-            field.setAccessible(true);
-
-            for (Source.Feature feature : ENABLED_FEATURES) {
-                field.set(feature, Source.JDK8);
-                if (!feature.allowedInSource(Source.JDK8)) {
-                    throw new IllegalStateException(feature.name() + " minLevel instrumentation failed!");
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        System.out.println(
-                ENABLED_FEATURES.stream()
-                        .map(Enum::name)
-                        .collect(Collectors.joining(
-                                "\n\t- ",
-                                "Jabel: initialized. Enabled features: \n\t- ",
-                                "\n"
-                        ))
-        );
-
-        Context context = ((JavacTaskImpl) task).getContext();
-
-        task.addTaskListener(new RecordsRetrofittingTaskListener(context));
+        System.out.println("Jabel: initialized");
     }
 
     @Override
@@ -108,5 +96,44 @@ public class JabelCompilerPlugin implements Plugin {
     // Make it auto start on Java 14+
     public boolean autoStart() {
         return true;
+    }
+
+    static class AllowedInSourceAdvice {
+
+        @Advice.OnMethodEnter
+        static void allowedInSource(
+                @Advice.This Source.Feature feature,
+                @Advice.Argument(value = 0, readOnly = false) Source source
+        ) {
+            switch (feature.name()) {
+                case "PRIVATE_SAFE_VARARGS":
+                case "SWITCH_EXPRESSION":
+                case "SWITCH_RULE":
+                case "SWITCH_MULTIPLE_CASE_LABELS":
+                case "LOCAL_VARIABLE_TYPE_INFERENCE":
+                case "VAR_SYNTAX_IMPLICIT_LAMBDAS":
+                case "DIAMOND_WITH_ANONYMOUS_CLASS_CREATION":
+                case "EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES":
+                case "TEXT_BLOCKS":
+                case "PATTERN_MATCHING_IN_INSTANCEOF":
+                case "REIFIABLE_TYPES_INSTANCEOF":
+                    //noinspection UnusedAssignment
+                    source = Source.DEFAULT;
+                    break;
+            }
+        }
+    }
+
+    static class CheckSourceLevelAdvice {
+
+        @Advice.OnMethodEnter
+        static void checkSourceLevel(
+                @Advice.Argument(value = 1, readOnly = false) Source.Feature feature
+        ) {
+            if (feature.allowedInSource(Source.JDK8)) {
+                //noinspection UnusedAssignment
+                feature = Source.Feature.LAMBDA;
+            }
+        }
     }
 }

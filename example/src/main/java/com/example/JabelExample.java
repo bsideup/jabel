@@ -67,6 +67,15 @@ public class JabelExample {
 
     class Inner {
 
+        static class WhyNot {
+
+        }
+
+        public static void staticMethodInsideInner() {
+            enum LocalEnum { }
+            System.out.println(LocalEnum.values());
+        }
+
         public String innerPublic() {
             // Test nest-mate
             return outerPrivate();

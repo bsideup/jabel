@@ -2,29 +2,22 @@ plugins {
     id "java"
 }
 
-sourceCompatibility = 14
-targetCompatibility = 8
+configure([tasks.compileJava]) {
+    sourceCompatibility = 16
+    options.release = 8
 
-tasks.withType(JavaCompile).all {
-    options.compilerArgs = [
-            "--release", "8",
-            '--enable-preview',
-    ]
-
-    doFirst {
-        options.compilerArgs = options.compilerArgs.findAll {
-            it != '--enable-preview'
-        }
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(16)
     }
 }
 
+compileTestJava {
+    sourceCompatibility = targetCompatibility = 8
+}
+
 test {
-    doFirst {
-        def java8home = System.getenv("JAVA_HOME_8")
-        if (!java8home) {
-            throw new IllegalStateException("JAVA_HOME_8 must be set")
-        }
-        executable = "$java8home/bin/java"
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 
@@ -32,5 +25,5 @@ dependencies {
     annotationProcessor project(":jabel-javac-plugin")
     compileOnly project(":jabel-javac-plugin")
 
-    testCompile 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.12'
 }

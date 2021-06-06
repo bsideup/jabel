@@ -37,20 +37,8 @@ the result's classfile version, because the compilation phase will be done with 
 
 ## How to use
 
-The plugin is distributed with [Jitpack](https://jitpack.io)
-
 ### Maven
-Make sure you have Jitpack added to the repositories list:
-```xml
-<repositories>
-    <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-    </repository>
-</repositories>
-```
-
-Jabel has to be added as an annotation processor to your maven-compiler-plugin:
+Jabel has to be enabled as a Javac plugin in your maven-compiler-plugin:
 ```xml
     <profiles>
         <profile>
@@ -88,6 +76,7 @@ Jabel has to be added as an annotation processor to your maven-compiler-plugin:
                     <release>8</release>
                     <source>14</source>
                     <target>14</target>
+                    <!-- The following setting can be avoided on Java 14 and higher -->
                     <compilerArgs>
                         <arg>-Xplugin:jabel</arg>
                     </compilerArgs>
@@ -110,45 +99,29 @@ Compile your project and verify that Jabel is installed and successfully reports
 ```
 [INFO] --- maven-compiler-plugin:3.8.1:compile (default-compile) @ tester.thirteen ---
 [INFO] Changes detected - recompiling the module!
-Jabel: initialized. Enabled features:
-	- VAR_SYNTAX_IMPLICIT_LAMBDAS
-	- LOCAL_VARIABLE_TYPE_INFERENCE
-	- PRIVATE_SAFE_VARARGS
-	- SWITCH_MULTIPLE_CASE_LABELS
-	- EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES
-	- SWITCH_EXPRESSION
-	- DIAMOND_WITH_ANONYMOUS_CLASS_CREATION
-	- TEXT_BLOCKS
-	- SWITCH_RULE
+Jabel: initialized.
 ```
 
-### Gradle
-First, you need to add Jitpack to your repository list:
-```groovy
-repositories {
-    maven { url 'https://jitpack.io' }
-}
-```
-
-Then, add Jabel as any other annotation processor:
+### Gradle 6 or older
+Use the following snippet to add Jabel to your Gradle build:
 ```groovy
 dependencies {
     annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
 }
-```
 
-Now, even if you set source/target/release to 8, the compiler will let you use some new language features.
-The full list of features will be printed during the compilation.
-```groovy
-sourceCompatibility = 14 // for the IDE support
+// Add more tasks if needed, such as compileTestJava
+configure([tasks.compileJava]) {
+    sourceCompatibility = 14 // for the IDE support
 
-tasks.withType(JavaCompile).all {
     options.compilerArgs = [
-            "--release", "8", // Avoid using Java 9+ APIs
+            "--release", "8",
             '--enable-preview',
     ]
 
     doFirst {
+        // Can be omitted on Java 14 and higher
+        options.compilerArgs << '-Xplugin:jabel'
+
         options.compilerArgs = options.compilerArgs.findAll {
             it != '--enable-preview'
         }
@@ -161,15 +134,7 @@ Compile your project and verify that the result is still a valid Java 8 bytecode
 $ ./gradlew --no-daemon clean :example:test
 
 > Task :example:compileJava
-Jabel: initialized. Enabled features:
-        - LOCAL_VARIABLE_TYPE_INFERENCE
-        - SWITCH_EXPRESSION
-        - PRIVATE_SAFE_VARARGS
-        - SWITCH_MULTIPLE_CASE_LABELS
-        - VAR_SYNTAX_IMPLICIT_LAMBDAS
-        - DIAMOND_WITH_ANONYMOUS_CLASS_CREATION
-        - SWITCH_RULE
-        - EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES
+Jabel: initialized.
 
 
 BUILD SUCCESSFUL in 6s
@@ -183,6 +148,33 @@ Classfile /Users/bsideup/Work/bsideup/jabel/example/build/classes/java/main/com/
 public class com.example.JabelExample
   minor version: 0
   major version: 52
+```
+
+### Gradle 7 and newer
+Gradle 7 supports toolchains and makes it extremely easy to configure everything:
+```groovy
+configure([tasks.compileJava]) {
+    sourceCompatibility = 16 // for the IDE support
+    options.release = 8
+
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(16)
+    }
+}
+```
+(Java 16 does not require the preview flag for any language feature supported by Jabel)
+
+You can also force your tests to run with Java 8:
+```groovy
+compileTestJava {
+    sourceCompatibility = targetCompatibility = 8
+}
+
+test {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
 ```
 
 ## IDE support
