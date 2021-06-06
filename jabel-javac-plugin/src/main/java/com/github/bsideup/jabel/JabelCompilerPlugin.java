@@ -4,6 +4,8 @@ import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
 import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.code.Source;
+import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.JavacMessages;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
@@ -18,9 +20,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaModule;
 
 import java.lang.instrument.Instrumentation;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -104,7 +104,20 @@ public class JabelCompilerPlugin implements Plugin {
                 Collections.emptyMap()
         );
 
-        task.addTaskListener(new RecordsRetrofittingTaskListener(((JavacTaskImpl) task).getContext()));
+        Context context = ((JavacTaskImpl) task).getContext();
+        JavacMessages.instance(context).add(locale -> new ResourceBundle() {
+            @Override
+            protected Object handleGetObject(String key) {
+                return "{0}";
+            }
+
+            @Override
+            public Enumeration<String> getKeys() {
+                return Collections.enumeration(Arrays.asList("missing.desugar.on.record"));
+            }
+        });
+
+        task.addTaskListener(new RecordsRetrofittingTaskListener(context));
 
         System.out.println("Jabel: initialized");
     }

@@ -1,6 +1,7 @@
 package com.github.bsideup.jabel;
 
 import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskListener;
 import com.sun.source.util.TreeScanner;
@@ -9,6 +10,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.*;
 
+import javax.tools.JavaFileObject;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
@@ -166,7 +168,7 @@ class RecordsRetrofittingTaskListener implements TaskListener {
                 }.scan(e.getCompilationUnit(), null);
                 break;
             case ANALYZE:
-                new MandatoryDesugarAnnotationTreeScanner(log).scan(e.getCompilationUnit(), null);
+                new MandatoryDesugarAnnotationTreeScanner(log, e.getCompilationUnit()).scan(e.getCompilationUnit(), null);
         }
     }
 
@@ -439,8 +441,11 @@ class RecordsRetrofittingTaskListener implements TaskListener {
 
         private final Log log;
 
-        public MandatoryDesugarAnnotationTreeScanner(Log log) {
+        private final CompilationUnitTree compilationUnit;
+
+        public MandatoryDesugarAnnotationTreeScanner(Log log, CompilationUnitTree compilationUnit) {
             this.log = log;
+            this.compilationUnit = compilationUnit;
         }
 
         @Override
@@ -453,14 +458,19 @@ class RecordsRetrofittingTaskListener implements TaskListener {
                                     return Desugar.class.getName().equals(type.toString());
                                 })
                 ) {
-                    log.error(
-                            ((JCTree.JCClassDecl) node).pos(),
-                            new JCDiagnostic.Error(
-                                    "jabel",
-                                    "missing.desugar.on.record",
-                                    "Must be annotated with @Desugar"
-                            )
-                    );
+                    JavaFileObject oldSource = log.useSource(compilationUnit.getSourceFile());
+                    try {
+                        log.error(
+                                (JCTree.JCClassDecl) node,
+                                new JCDiagnostic.Error(
+                                        "jabel",
+                                        "missing.desugar.on.record",
+                                        "Must be annotated with @Desugar"
+                                )
+                        );
+                    } finally {
+                        log.useSource(oldSource);
+                    }
                 }
             }
             return super.visitClass(node, aVoid);
