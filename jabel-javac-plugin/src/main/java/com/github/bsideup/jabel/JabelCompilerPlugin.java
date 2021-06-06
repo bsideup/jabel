@@ -70,7 +70,20 @@ public class JabelCompilerPlugin implements Plugin {
             );
         }};
 
-        Instrumentation instrumentation = ByteBuddyAgent.install();
+        try {
+            ByteBuddyAgent.install();
+        } catch (Exception e) {
+            ByteBuddyAgent.install(
+                    new ByteBuddyAgent.AttachmentProvider.Compound(
+                            ByteBuddyAgent.AttachmentProvider.ForJ9Vm.INSTANCE,
+                            ByteBuddyAgent.AttachmentProvider.ForStandardToolsJarVm.JVM_ROOT,
+                            ByteBuddyAgent.AttachmentProvider.ForStandardToolsJarVm.JDK_ROOT,
+                            ByteBuddyAgent.AttachmentProvider.ForStandardToolsJarVm.MACINTOSH,
+                            ByteBuddyAgent.AttachmentProvider.ForUserDefinedToolsJar.INSTANCE,
+                            ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE
+                    )
+            );
+        }
 
         ByteBuddy byteBuddy = new ByteBuddy();
 
@@ -91,7 +104,7 @@ public class JabelCompilerPlugin implements Plugin {
 
         JavaModule jabelModule = JavaModule.ofType(JabelCompilerPlugin.class);
         JavaModule.ofType(JavacTask.class).modify(
-                instrumentation,
+                ByteBuddyAgent.getInstrumentation(),
                 Collections.emptySet(),
                 Collections.emptyMap(),
                 new HashMap<String, java.util.Set<JavaModule>>() {{
