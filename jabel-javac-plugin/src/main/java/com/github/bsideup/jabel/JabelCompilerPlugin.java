@@ -2,10 +2,12 @@ package com.github.bsideup.jabel;
 
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
+import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.code.Source;
+import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.JavacMessages;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
-import net.bytebuddy.agent.ByteBuddyAgent.AttachmentProvider;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.asm.MemberSubstitution;
@@ -15,9 +17,10 @@ import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.JavaModule;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.instrument.Instrumentation;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -67,20 +70,7 @@ public class JabelCompilerPlugin implements Plugin {
             );
         }};
 
-        try {
-            ByteBuddyAgent.install();
-        } catch (Exception e) {
-            ByteBuddyAgent.install(
-                    new AttachmentProvider.Compound(
-                            AttachmentProvider.ForJ9Vm.INSTANCE,
-                            AttachmentProvider.ForStandardToolsJarVm.JVM_ROOT,
-                            AttachmentProvider.ForStandardToolsJarVm.JDK_ROOT,
-                            AttachmentProvider.ForStandardToolsJarVm.MACINTOSH,
-                            AttachmentProvider.ForUserDefinedToolsJar.INSTANCE,
-                            AttachmentProvider.ForEmulatedAttachment.INSTANCE
-                    )
-            );
-        }
+        Instrumentation instrumentation = ByteBuddyAgent.install();
 
         ByteBuddy byteBuddy = new ByteBuddy();
 
@@ -98,6 +88,36 @@ public class JabelCompilerPlugin implements Plugin {
                     .make()
                     .load(classLoader, ClassReloadingStrategy.fromInstalledAgent());
         });
+
+        JavaModule jabelModule = JavaModule.ofType(JabelCompilerPlugin.class);
+        JavaModule.ofType(JavacTask.class).modify(
+                instrumentation,
+                Collections.emptySet(),
+                Collections.emptyMap(),
+                new HashMap<String, java.util.Set<JavaModule>>() {{
+                    put("com.sun.tools.javac.api", Collections.singleton(jabelModule));
+                    put("com.sun.tools.javac.tree", Collections.singleton(jabelModule));
+                    put("com.sun.tools.javac.code", Collections.singleton(jabelModule));
+                    put("com.sun.tools.javac.util", Collections.singleton(jabelModule));
+                }},
+                Collections.emptySet(),
+                Collections.emptyMap()
+        );
+
+        Context context = ((JavacTaskImpl) task).getContext();
+        JavacMessages.instance(context).add(locale -> new ResourceBundle() {
+            @Override
+            protected Object handleGetObject(String key) {
+                return "{0}";
+            }
+
+            @Override
+            public Enumeration<String> getKeys() {
+                return Collections.enumeration(Arrays.asList("missing.desugar.on.record"));
+            }
+        });
+
+        task.addTaskListener(new RecordsRetrofittingTaskListener(context));
 
         System.out.println("Jabel: initialized");
     }
@@ -131,6 +151,7 @@ public class JabelCompilerPlugin implements Plugin {
                 case "TEXT_BLOCKS":
                 case "PATTERN_MATCHING_IN_INSTANCEOF":
                 case "REIFIABLE_TYPES_INSTANCEOF":
+                case "RECORDS":
                     //noinspection UnusedAssignment
                     source = Source.DEFAULT;
                     break;
