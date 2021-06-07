@@ -25,5 +25,5 @@ dependencies {
     annotationProcessor project(":jabel-javac-plugin")
     compileOnly project(":jabel-javac-plugin")
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.2'
 }
