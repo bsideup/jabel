@@ -10,6 +10,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.util.*;
 
+import javax.lang.model.element.Modifier;
 import javax.tools.JavaFileObject;
 import java.util.Iterator;
 import java.util.stream.Stream;
@@ -176,6 +177,13 @@ class RecordsRetrofittingTaskListener implements TaskListener {
     public void finished(TaskEvent e) {
     }
 
+    private Stream<JCTree.JCVariableDecl> getRecordComponents(JCTree.JCClassDecl classDecl) {
+        return classDecl.getMembers().stream()
+                .filter(JCTree.JCVariableDecl.class::isInstance)
+                .map(JCTree.JCVariableDecl.class::cast)
+                .filter(it -> !it.getModifiers().getFlags().contains(Modifier.STATIC));
+    }
+
     private List<JCTree.JCStatement> generateToString(JCTree.JCClassDecl classDecl) {
         JCTree.JCExpression stringBuilder = make.NewClass(
                 null,
@@ -185,11 +193,8 @@ class RecordsRetrofittingTaskListener implements TaskListener {
                 null
         );
 
-        Stream<JCTree.JCVariableDecl> fields = classDecl.getMembers().stream()
-                .filter(JCTree.JCVariableDecl.class::isInstance)
-                .map(JCTree.JCVariableDecl.class::cast);
         for (
-                Iterator<JCTree.JCVariableDecl> iterator = fields.iterator();
+                Iterator<JCTree.JCVariableDecl> iterator = getRecordComponents(classDecl).iterator();
                 iterator.hasNext();
         ) {
             JCTree.JCVariableDecl fieldDecl = iterator.next();
@@ -274,11 +279,12 @@ class RecordsRetrofittingTaskListener implements TaskListener {
 
         // fields
         {
-            for (JCTree member : classDecl.getMembers()) {
-                if (!(member instanceof JCTree.JCVariableDecl)) {
-                    continue;
-                }
-                JCTree.JCVariableDecl fieldDecl = (JCTree.JCVariableDecl) member;
+            for (
+                    Iterator<JCTree.JCVariableDecl> iterator = getRecordComponents(classDecl).iterator();
+                    iterator.hasNext();
+            ) {
+                JCTree.JCVariableDecl fieldDecl = iterator.next();
+
                 JCTree.JCExpression myFieldAccess = make.Select(make.This(Type.noType), fieldDecl.name);
                 JCTree.JCExpression otherFieldAccess = make.Select(
                         make.TypeCast(make.Ident(classDecl.name), make.Ident(otherName)),
@@ -313,11 +319,11 @@ class RecordsRetrofittingTaskListener implements TaskListener {
     private List<JCTree.JCStatement> generateHashCode(JCTree.JCClassDecl classDecl) {
         ListBuffer<JCTree.JCExpression> expressions = new ListBuffer<>();
 
-        for (JCTree member : classDecl.getMembers()) {
-            if (!(member instanceof JCTree.JCVariableDecl)) {
-                continue;
-            }
-            JCTree.JCVariableDecl fieldDecl = (JCTree.JCVariableDecl) member;
+        for (
+                Iterator<JCTree.JCVariableDecl> iterator = getRecordComponents(classDecl).iterator();
+                iterator.hasNext();
+        ) {
+            JCTree.JCVariableDecl fieldDecl = iterator.next();
 
             JCTree fType = fieldDecl.getType();
 

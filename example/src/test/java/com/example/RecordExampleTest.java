@@ -62,10 +62,9 @@ public class RecordExampleTest {
 
     @Test
     public void testHashCodeWithDefaults() {
-        RecordExample r = new RecordExample(0, null, 0, 0f, 5d, null);
         assertEquals(
-                intellijStyleHashCode(r),
-                Objects.hashCode(r)
+                intellijStyleHashCode(RecordExample.DUMMY),
+                Objects.hashCode(RecordExample.DUMMY)
         );
     }
 
