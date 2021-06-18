@@ -20,15 +20,12 @@ import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaModule;
 
-import java.lang.instrument.Instrumentation;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class JabelCompilerPlugin implements Plugin {
-
-    @Override
-    public void init(JavacTask task, String... args) {
+    static {
         Map<String, AsmVisitorWrapper> visitors = new HashMap<String, AsmVisitorWrapper>() {{
             // Disable the preview feature check
             AsmVisitorWrapper checkSourceLevelAdvice = Advice.to(CheckSourceLevelAdvice.class)
@@ -118,7 +115,10 @@ public class JabelCompilerPlugin implements Plugin {
                 Collections.emptySet(),
                 Collections.emptyMap()
         );
+    }
 
+    @Override
+    public void init(JavacTask task, String... args) {
         Context context = ((JavacTaskImpl) task).getContext();
         JavacMessages.instance(context).add(locale -> new ResourceBundle() {
             @Override
