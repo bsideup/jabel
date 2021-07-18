@@ -104,7 +104,7 @@ Jabel: initialized.
 
 ### Gradle 6 or older
 Use the following snippet to add Jabel to your Gradle build:
-```groovy
+```gradle
 dependencies {
     annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
 }
@@ -152,7 +152,7 @@ public class com.example.JabelExample
 
 ### Gradle 7 and newer
 Gradle 7 supports toolchains and makes it extremely easy to configure everything:
-```groovy
+```gradle
 configure([tasks.compileJava]) {
     sourceCompatibility = 16 // for the IDE support
     options.release = 8
@@ -165,7 +165,7 @@ configure([tasks.compileJava]) {
 (Java 16 does not require the preview flag for any language feature supported by Jabel)
 
 You can also force your tests to run with Java 8:
-```groovy
+```gradle
 compileTestJava {
     sourceCompatibility = targetCompatibility = 8
 }
