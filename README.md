@@ -89,7 +89,7 @@ Jabel has to be enabled as a Javac plugin in your maven-compiler-plugin:
         <dependency>
             <groupId>com.github.bsideup.jabel</groupId>
             <artifactId>jabel-javac-plugin</artifactId>
-            <version>0.3.0</version>
+            <version>0.4.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -106,7 +106,7 @@ Jabel: initialized.
 Use the following snippet to add Jabel to your Gradle build:
 ```gradle
 dependencies {
-    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
+    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.4.1'
 }
 
 // Add more tasks if needed, such as compileTestJava
