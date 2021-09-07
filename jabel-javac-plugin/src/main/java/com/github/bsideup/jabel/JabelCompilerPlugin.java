@@ -14,6 +14,7 @@ import net.bytebuddy.asm.MemberSubstitution;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
@@ -83,7 +84,8 @@ public class JabelCompilerPlugin implements Plugin {
             );
         }
 
-        ByteBuddy byteBuddy = new ByteBuddy();
+        ByteBuddy byteBuddy = new ByteBuddy()
+                .with(MethodGraph.Compiler.ForDeclaredMethods.INSTANCE);
 
         ClassLoader classLoader = JavacTask.class.getClassLoader();
         ClassFileLocator classFileLocator = ClassFileLocator.ForClassLoader.of(classLoader);
@@ -91,7 +93,7 @@ public class JabelCompilerPlugin implements Plugin {
 
         visitors.forEach((className, visitor) -> {
             byteBuddy
-                    .redefine(
+                    .decorate(
                             typePool.describe(className).resolve(),
                             classFileLocator
                     )
