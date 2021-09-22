@@ -10,14 +10,18 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
-import net.bytebuddy.asm.MemberSubstitution;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
-import net.bytebuddy.implementation.bytecode.Removal;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.jar.asm.ClassVisitor;
+import net.bytebuddy.jar.asm.MethodVisitor;
+import net.bytebuddy.jar.asm.Opcodes;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaModule;
 
@@ -33,21 +37,7 @@ public class JabelCompilerPlugin implements Plugin {
                     .on(named("checkSourceLevel").and(takesArguments(2)));
 
             // Allow features that were introduced together with Records (local enums, static inner members, ...)
-            AsmVisitorWrapper allowRecordsEraFeaturesAdvice = MemberSubstitution.relaxed()
-                    .field(named("allowRecords"))
-                    .onRead()
-                    .replaceWith(
-                            (instrumentedType, instrumentedMethod, typePool) -> {
-                                return (targetType, target, parameters, result, freeOffset) -> {
-                                    return new StackManipulation.Compound(
-                                            // remove aload_0
-                                            Removal.of(targetType),
-                                            IntegerConstant.forValue(true)
-                                    );
-                                };
-                            }
-                    )
-                    .on(any());
+            AsmVisitorWrapper allowRecordsEraFeaturesAdvice = new FieldAccessStub("allowRecords", true);
 
             put("com.sun.tools.javac.parser.JavacParser",
                     new AsmVisitorWrapper.Compound(
@@ -186,6 +176,39 @@ public class JabelCompilerPlugin implements Plugin {
                 //noinspection UnusedAssignment
                 feature = Source.Feature.LAMBDA;
             }
+        }
+    }
+
+    private static class FieldAccessStub extends AsmVisitorWrapper.AbstractBase {
+
+        final String fieldName;
+
+        final Object value;
+
+        public FieldAccessStub(String fieldName, Object value) {
+            this.fieldName = fieldName;
+            this.value = value;
+        }
+
+        @Override
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, Implementation.Context implementationContext, TypePool typePool, FieldList<FieldDescription.InDefinedShape> fields, MethodList<?> methods, int writerFlags, int readerFlags) {
+            return new ClassVisitor(Opcodes.ASM9, classVisitor) {
+                @Override
+                public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                    MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+                    return new MethodVisitor(Opcodes.ASM9, methodVisitor) {
+                        @Override
+                        public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+                            if (opcode == Opcodes.GETFIELD && fieldName.equalsIgnoreCase(name)) {
+                                super.visitInsn(Opcodes.POP);
+                                super.visitLdcInsn(value);
+                            } else {
+                                super.visitFieldInsn(opcode, owner, name, descriptor);
+                            }
+                        }
+                    };
+                }
+            };
         }
     }
 }
