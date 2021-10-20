@@ -331,6 +331,16 @@ class RecordsRetrofittingTaskListener implements TaskListener {
 
             if (fType instanceof JCTree.JCPrimitiveTypeTree) {
                 switch (((JCTree.JCPrimitiveTypeTree) fType).getPrimitiveTypeKind()) {
+                    case BOOLEAN:
+                        /* this.fieldName ? 1 : 0 */
+                        expressions.append(
+                                make.Conditional(
+                                        myFieldAccess,
+                                        make.Literal(TypeTag.INT, 1),
+                                        make.Literal(TypeTag.INT, 0)
+                                )
+                        );
+                        break;
                     case LONG:
                         expressions.append(longToIntForHashCode(myFieldAccess));
                         break;
