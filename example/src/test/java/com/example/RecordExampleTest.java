@@ -13,32 +13,32 @@ public class RecordExampleTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCtor() {
         int i = 1_000_000 + 1;
-        new RecordExample(i, "yeah", 100500, 0.5f, 5d, new String[]{"Hello", "World!"});
+        new RecordExample(i, "yeah", 100500, 0.5f, 5d, new String[]{"Hello", "World!"}, true);
     }
 
     @Test
     public void testToString() {
-        RecordExample r = new RecordExample(42, "yeah", 100500, 0.5f, 5d, new String[]{"Hello", "World!"});
+        RecordExample r = new RecordExample(42, "yeah", 100500, 0.5f, 5d, new String[]{"Hello", "World!"}, true);
 
         assertEquals(
-                "RecordExample[i=42,s=yeah,l=100500,f=0.5,d=5.0,arr=[Ljava.lang.String;@hash]",
+                "RecordExample[i=42,s=yeah,l=100500,f=0.5,d=5.0,arr=[Ljava.lang.String;@hash,b=true]",
                 Objects.toString(r).replaceAll(";@[a-f0-9]+", ";@hash")
         );
     }
 
     @Test
     public void testToStringWithNulls() {
-        RecordExample r = new RecordExample(42, null, 100500, 0.5f, 5d, null);
+        RecordExample r = new RecordExample(42, null, 100500, 0.5f, 5d, null, true);
 
         assertEquals(
-                "RecordExample[i=42,s=null,l=100500,f=0.5,d=5.0,arr=null]",
+                "RecordExample[i=42,s=null,l=100500,f=0.5,d=5.0,arr=null,b=true]",
                 Objects.toString(r)
         );
     }
 
     @Test
     public void testEqualsSame() {
-        RecordExample r = new RecordExample(42, null, 100500, 0.5f, 5d, null);
+        RecordExample r = new RecordExample(42, null, 100500, 0.5f, 5d, null, true);
         assertEquals(r, r);
     }
 
@@ -47,16 +47,16 @@ public class RecordExampleTest {
         String s = "So cool!";
         String[] arr = new String[] { "Hello", "World!"};
         assertEquals(
-                new RecordExample(42, s, 100500, 0.5f, 5d, arr),
-                new RecordExample(42, s, 100500, 0.5f, 5d, arr)
+                new RecordExample(42, s, 100500, 0.5f, 5d, arr, true),
+                new RecordExample(42, s, 100500, 0.5f, 5d, arr, true)
         );
     }
 
     @Test
     public void testNotEquals() {
         assertNotEquals(
-                new RecordExample(42, "l", 100500, 0.5f, 5d, new String[] { "Hello", "World!"}),
-                new RecordExample(42, "l", 100500, 0.5f, 5d, new String[] { "Hello", "World!"})
+                new RecordExample(42, "l", 100500, 0.5f, 5d, new String[] { "Hello", "World!"}, true),
+                new RecordExample(42, "l", 100500, 0.5f, 5d, new String[] { "Hello", "World!"}, true)
         );
     }
 
@@ -70,7 +70,7 @@ public class RecordExampleTest {
 
     @Test
     public void testHashCode() {
-        RecordExample r = new RecordExample(42, "Hi", 100500, 0.5f, 5d, new String[]{"Hello", "World!"});
+        RecordExample r = new RecordExample(42, "Hi", 100500, 0.5f, 5d, new String[]{"Hello", "World!"}, true);
         assertEquals(
                 intellijStyleHashCode(r),
                 Objects.hashCode(r)
@@ -86,6 +86,7 @@ public class RecordExampleTest {
         long temp = Double.doubleToLongBits(r.d());
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + Arrays.hashCode(r.arr());
+        result = 31 * result + (r.b() ? 1 : 0);
         return result;
     }
 }
