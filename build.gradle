@@ -1,7 +1,8 @@
 subprojects {
     apply from: "$rootDir/gradle/publishing.gradle"
 
-    group = 'com.github.bsideup.jabel'
+    group = 'com.metsci.ext.com.github.bsideup.jabel'
+    version = '0.4.3'
     repositories {
         jcenter()
     }

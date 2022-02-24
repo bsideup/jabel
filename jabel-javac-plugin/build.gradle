@@ -1,6 +1,7 @@
 plugins {
     id "java"
     id "maven-publish"
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 sourceCompatibility = targetCompatibility = 8
@@ -34,4 +35,10 @@ publishing {
             artifact javadocJar
         }
     }
+}
+
+shadowJar {
+    include '*.jar'
+    exclude 'net.java*'
+    relocate 'net.bytebuddy', 'shadow.net.bytebuddy'
 }
