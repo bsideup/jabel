@@ -49,6 +49,39 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+
+            <!-- Shade Glimpse so we don't conflict with TRK's Glimpse -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <relocations combine.children="append">
+                        <relocation>
+                            <pattern>net.bytebuddy</pattern>
+                            <shadedPattern>
+                                jabel.shaded.net.bytebuddy
+                            </shadedPattern>
+                            <includes>
+                                <include>net.bytebuddy.**</include>
+                            </includes>
+                        </relocation>
+                    </relocations>
+                    <artifactSet>
+                        <includes>
+                            <include>net.bytebuddy:*</include>
+                        </includes>
+                    </artifactSet>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
