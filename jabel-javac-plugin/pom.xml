@@ -3,7 +3,7 @@
 
     <groupId>com.metsci.ext.com.github.bsideup.jabel</groupId>
     <artifactId>jabel-javac-plugin</artifactId>
-    <version>0.4.4-SNAPSHOT</version>
+    <version>0.4.4</version>
     <packaging>jar</packaging>
 
     <name>Subnode Core</name>
