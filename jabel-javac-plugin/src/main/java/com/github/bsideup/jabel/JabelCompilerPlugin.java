@@ -2,7 +2,7 @@ package com.github.bsideup.jabel;
 
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
-import com.sun.tools.javac.api.JavacTaskImpl;
+import com.sun.tools.javac.api.BasicJavacTask;
 import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.JavacMessages;
@@ -111,7 +111,7 @@ public class JabelCompilerPlugin implements Plugin {
 
     @Override
     public void init(JavacTask task, String... args) {
-        Context context = ((JavacTaskImpl) task).getContext();
+        Context context = ((BasicJavacTask) task).getContext();
         JavacMessages.instance(context).add(locale -> new ResourceBundle() {
             @Override
             protected Object handleGetObject(String key) {
