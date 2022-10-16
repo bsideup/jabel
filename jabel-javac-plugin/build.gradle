@@ -8,7 +8,7 @@ sourceCompatibility = targetCompatibility = 8
 dependencies {
     implementation 'net.bytebuddy:byte-buddy:1.12.18'
     implementation 'net.bytebuddy:byte-buddy-agent:1.12.18'
-    implementation 'net.java.dev.jna:jna:5.9.0'
+    implementation 'net.java.dev.jna:jna:5.12.1'
 }
 
 

@@ -106,7 +106,7 @@ Jabel: initialized.
 Use the following snippet to add Jabel to your Gradle build:
 ```gradle
 dependencies {
-    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.4.1'
+    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.4.2'
 }
 
 // Add more tasks if needed, such as compileTestJava
@@ -153,6 +153,11 @@ public class com.example.JabelExample
 ### Gradle 7 and newer
 Gradle 7 supports toolchains and makes it extremely easy to configure everything:
 ```gradle
+dependencies {
+    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.4.2'
+    compileOnly 'com.github.bsideup.jabel:jabel-javac-plugin:0.4.2'
+}
+
 configure([tasks.compileJava]) {
     sourceCompatibility = 16 // for the IDE support
     options.release = 8
