@@ -6,7 +6,7 @@ plugins {
 sourceCompatibility = targetCompatibility = 8
 
 dependencies {
-    implementation platform('net.bytebuddy:byte-buddy-parent:1.12.11')
+    implementation platform('net.bytebuddy:byte-buddy-parent:1.12.18')
     implementation 'net.bytebuddy:byte-buddy'
     implementation 'net.bytebuddy:byte-buddy-agent'
     implementation 'net.java.dev.jna:jna:5.12.1'
