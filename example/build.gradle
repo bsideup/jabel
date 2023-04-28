@@ -7,7 +7,7 @@ configure([tasks.compileJava]) {
     options.release = 8
 
     javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(19)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
