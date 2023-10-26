@@ -173,8 +173,13 @@ public class JabelCompilerPlugin implements Plugin {
                 @Advice.Argument(value = 1, readOnly = false) Source.Feature feature
         ) {
             if (feature.allowedInSource(Source.JDK8)) {
-                //noinspection UnusedAssignment
-                feature = Source.Feature.LAMBDA;
+                if (Source.MIN.compareTo(Source.JDK8) < 0) {
+                  //noinspection UnusedAssignment
+                  feature = Source.Feature.LAMBDA;
+                } else {
+                  //noinspection UnusedAssignment
+                  feature = Source.Feature.RECORDS;
+                }
             }
         }
     }
