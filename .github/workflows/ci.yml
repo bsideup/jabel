@@ -1,16 +1,36 @@
-name: CI
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
-on: [push, pull_request]
+name: Build & test
+
+on:
+  pull_request:
+  push:
+    branches: [ master, release/* ]
 
 jobs:
-  build:
+  linux:
+    name: Linux
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up JDK
-      uses: actions/setup-java@v1
-      with:
-        java-version: 16
-    - name: Build with Gradle
-      run: ./gradlew build
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: 16
+          distribution: 'temurin'
+
+      - uses: burrunan/gradle-cache-action@a54b6ce2cbbba932e5d142129dddef103e6ad143 #v1.19
+        name: Build with Gradle
+        with:
+          arguments: build
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Test Results Linux
+          path: '**/test-results/**/*.xml'

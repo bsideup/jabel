@@ -1,4 +1,0 @@
-rootProject.name = 'jabel'
-
-include 'jabel-javac-plugin'
-include 'example'

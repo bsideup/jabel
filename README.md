@@ -106,7 +106,7 @@ Jabel: initialized.
 Use the following snippet to add Jabel to your Gradle build:
 ```gradle
 dependencies {
-    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.4.2'
+    annotationProcessor 'com.pkware.jabel:jabel-javac-plugin:0.4.2'
 }
 
 // Add more tasks if needed, such as compileTestJava
@@ -125,6 +125,26 @@ configure([tasks.compileJava]) {
         options.compilerArgs = options.compilerArgs.findAll {
             it != '--enable-preview'
         }
+    }
+}
+```
+
+```kotlin
+dependencies {
+    annotationProcessor("com.pkware.jabel:jabel-javac-plugin:0.4.2")
+}
+
+// Add more tasks if needed, such as compileTestJava
+tasks.withType<JavaCompile>().configureEach {
+    sourceCompatibility = JavaVersion.VERSION_14.toString() // for the IDE support
+
+    options.compilerArgs.addAll(arrayOf("--release 8","--enable-preview"))
+
+    doFirst {
+        // Can be omitted on Java 14 and higher
+        options.compilerArgs.add("-Xplugin:jabel")
+
+        options.compilerArgs.remove("--enable-preview")
     }
 }
 ```
@@ -154,8 +174,8 @@ public class com.example.JabelExample
 Gradle 7 supports toolchains and makes it extremely easy to configure everything:
 ```gradle
 dependencies {
-    annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.4.2'
-    compileOnly 'com.github.bsideup.jabel:jabel-javac-plugin:0.4.2'
+    annotationProcessor 'com.pkware.jabel:jabel-javac-plugin:0.4.2'
+    compileOnly 'com.pkware.jabel:jabel-javac-plugin:0.4.2'
 }
 
 configure([tasks.compileJava]) {
@@ -165,6 +185,24 @@ configure([tasks.compileJava]) {
     javaCompiler = javaToolchains.compilerFor {
         languageVersion = JavaLanguageVersion.of(16)
     }
+}
+```
+
+```kotlin
+dependencies {
+    annotationProcessor("com.pkware.jabel.jabel:jabel-javac-plugin:0.4.2")
+    compileOnly("com.pkware.jabel:jabel-javac-plugin:0.4.2")
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    sourceCompatibility = JavaVersion.VERSION_16.toString() // for the IDE support
+    options.release.set(8)
+
+    javaCompiler.set(
+        javaToolchains.compilerFor {
+            languageVersion.set(JavaLanguageVersion.of(16))
+        }
+    )
 }
 ```
 (Java 16 does not require the preview flag for any language feature supported by Jabel)
@@ -182,6 +220,23 @@ test {
 }
 ```
 
+```kotlin
+tasks.withType<JavaCompile>().configureEach {
+    if (name == "compileTestJava") {
+        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+        targetCompatibility = sourceCompatibility
+    }
+}
+
+tasks.withType<Test> {
+    javaLauncher.set(
+        javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(8))
+        }
+    )
+}
+```
+
 ## IDE support
 
 ### IntelliJ IDEA
@@ -194,3 +249,22 @@ If you set `--release=8` flag, the compiler will report usages of APIs that were
 * Click "Higher than", and select "8 - Lambdas, type annotations etc." from dropdown
 
 ![IntelliJ IDEA Language Level Inspection](docs/images/idea-setting-language-level-inspection.png)
+
+## Releasing
+1. Make and checkout a release branch on github.
+2. Change the version in gradle.properties to a non-SNAPSHOT version.
+3. Run `git commit -am "Release X.Y.Z."` (where X.Y.Z is the new version) in the terminal or command
+   line.
+4. Make a PR with your changes.
+5. Merge the release PR after approval, tag the commit on the main branch with
+   `git tag -a X.Y.Z -m "X.Y.Z"`(X.Y.Z is the new version).
+6. Run `git push --tags`.
+7. Run `./gradlew publish` in the terminal or command line.
+8. Visit [Sonatype Nexus](https://oss.sonatype.org/) and promote the artifact.
+9. Update `gradle.properties` to the next SNAPSHOT version.
+10. Run `git commit -am "Prepare next development version."`
+11. Make a PR with your changes.
+12. Merge the next version PR after approval.
+
+If step 8 or 9 fails, drop the Sonatype repo, fix the problem, commit, and start again at step 8.
+
